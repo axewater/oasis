@@ -1,0 +1,24 @@
+<!-- in templates/admin_main.html -->
+{% extends "base.html" %}
+
+{% block content %}
+{% include "admin_navbar.html" %}
+
+<title>Persona Admin Page</title>
+
+<div class="container-settings">
+<b>Persona Admin Page</b>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+</div>
+{% endblock %}
+
+

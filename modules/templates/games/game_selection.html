@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block styles %}
+{% endblock %}
+{% block content %}
+
+<div class="flashes">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</div>
+
+<div>
+    <title>Game Selection</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/game_styles.css">
+    <header>
+        <img src="/static/images/games.jpg" alt="Games logo">
+    </header>
+    <div class="game-container">
+            <div class="game-item">
+                <h2>QUIZ</h2>
+                <img src="/static/images/quiz.jpg" alt="Quiz game">
+                <a href="/games/quiz">Play Now</a>
+            </div>
+            <div class="game-item">
+                <h2>SOON</h2>
+                <img src="/static/images/soon.jpg" alt="SOON game">
+               <a href="#">Play Now</a>
+            </div>
+    </div>
+</div>
+{% endblock %}

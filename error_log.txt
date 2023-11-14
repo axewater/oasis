@@ -1,0 +1,7 @@
+2023-05-30 23:09:03 - imagegen - name 'requests' is not defined
+2023-05-30 23:10:45 - imagegen - Additional properties are not allowed ('max_outputs' was unexpected)
+2023-05-30 23:20:56 - imagegen - list indices must be integers or slices, not str
+2023-05-30 23:28:40 - imagegen - list indices must be integers or slices, not str
+2023-05-30 23:34:05 - imagegen - list indices must be integers or slices, not str
+2023-05-30 23:37:27 - imagegen - Your request was rejected as a result of our safety system. Your prompt may contain text that is not allowed by our safety system.
+2023-05-30 23:38:30 - imagegen - [Errno 2] No such file or directory: 'static/avatars/A big dog.png'

@@ -1,0 +1,51 @@
+<!-- in templates/settings_api.html -->
+
+
+{% extends "base.html" %}
+{% block content %}
+{% include "settings_navbar.html" %}
+
+<div class="container-settings">
+  <div class="content-flash">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flashes">
+      {% for message in messages %}
+      <div class="flash">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+  </div>
+
+  <br>
+  <h2>My API keys</h2>
+  <br
+    <form action="" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <p>
+        Current OpenAI API Key
+      </p>
+        {{ current_user.openai_api_key or 'NONE SAVED' }}
+      <br>
+      <br>
+      <label class="label" for="openai_api_key">OpenAI API Key</label><br>
+      <input id="openai_api_key" name="openai_api_key" type="text" value="{{ form.openai_api_key.data }}" class="input-generate"><br>
+      <p>
+        <br>
+        Current GCloud API Key: {{ current_user.gcloud_api_key or 'NONE SAVED' }}<br>
+        <br>
+        <label class="label" for="gcloud_api_key">GCloud API Key</label><br>
+        <input id="gcloud_api_key" name="gcloud_api_key" type="text" value="{{ form.gcloud_api_key.data }}" class="input-generate"><br>
+      </p>
+      <p>
+        <button type="submit" class="button">Save Changes</button>
+      </p>
+    </form>
+    <form action="{{ url_for('main.settings') }}" method="get">
+      <button type="submit" class="delete-button">Cancel Changes</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

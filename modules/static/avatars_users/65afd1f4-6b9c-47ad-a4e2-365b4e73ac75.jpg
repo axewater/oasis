@@ -1,0 +1,2 @@
+subprocess.Popen([ 'nslookup', hostname ], ... , shell=False)
+

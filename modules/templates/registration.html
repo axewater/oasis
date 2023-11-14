@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<html>
+<head>
+    <title>Registration</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+
+                <div class="container-settings">
+                    <div class="speech-bubble ai">Register for your free trial account at Persona now !</div>
+
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                    <div class="flashes">
+                        {% for message in messages %}
+                        <div class="flash">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <form action="/register" method="post">
+                        {{ form.csrf_token }}
+                        <div class="form-group">
+                            {{ form.username.label }}
+                            {{ form.username(class_="username-input") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.email.label }}
+                            {{ form.email(class_="email-input") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.password.label }}
+                            {{ form.password(class_="password-input") }}
+                        </div>
+                        <input type="submit" value="Register" class="button">
+                    </form>
+                </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

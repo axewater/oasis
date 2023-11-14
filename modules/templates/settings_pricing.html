@@ -1,0 +1,48 @@
+<!-- in templates/settings_sub.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+{% include "settings_navbar.html" %}
+<div class="container-settings-sub">
+    <br>
+    <h2>Subscription Pricing</h2>
+    <br>
+    <div class="role-container">
+        <div>
+            <div class="role-box {% if role == 'trial' %}highlight{% endif %}" onclick="window.location.href='{% if role != 'trial' %}/pricing{% endif %}'">
+                <h3>Trial</h3>
+            </div>
+                <div class="container-bullet-list">
+                    <ul>
+                        <li>100 free AI chat responses</li>
+                        <li>Access to hundreds of Chatbots</li>
+                        <li>Access to Chatbot Generator</li>
+                        <li>Limited to GPT3.5 Chatbots</li>
+
+                    </ul>
+                </div>
+
+            <div class="role-box {% if role == 'premium' or role == 'admin' %}highlight{% endif %}" onclick="window.location.href='{% if role != 'premium' and role != 'admin' %}/pricing{% endif %}'">
+                <div>
+                    <h3>Premium</h3>
+
+                    <p>$10/mo</p>
+                </div>
+            </div>
+            <div class="container-bullet-list">
+                <ul>
+                        <li>Unlimited AI chat responses</li>
+                        <li>Access to Chatbot Generator</li>
+                        <li>Access to Chatbot Editor</li>
+                        <li>Access to PREMIUM Chatbots</li>
+                        <li>GPT4 engine available on all bots</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+

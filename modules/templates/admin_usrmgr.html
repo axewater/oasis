@@ -1,0 +1,68 @@
+<!-- templates/admin_usrmgr.html -->
+{% extends "base.html" %}
+{% block content %}
+
+{% include "admin_navbar.html" %}
+<div class="container-admin-usrmgr">
+    <h1>User Manager</h1><br>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <p>
+    <label for="user-search">Search User:</label><br>
+    <input type="text" id="user-search" name="user-search">
+</p>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.name.label }}<br>
+            {{ form.name() }}
+        </p>
+        <p>
+            {{ form.email.label }}<br>
+            {{ form.email() }}
+        </p>
+        <p>
+            {{ form.role.label }}<br>
+            {{ form.role() }}
+        </p>
+        <p>
+            {{ form.state.label }}<br>
+            {{ form.state() }}
+        </p>
+        <p>
+            {{ form.tts_engine.label }}<br>
+            {{ form.tts_engine() }}
+        </p>
+        <p>
+            {{ form.quota_messages.label }}<br>
+            {{ form.quota_messages() }}
+        </p>
+        <p>
+            {{ form.avatarpath.label }}<br>
+            {{ form.avatarpath() }}<br>
+            <img src="{{ url_for('static', filename=form.avatarpath.data) }}" alt="User Avatar">
+        </p>
+        <p>
+            {{ form.country.label }}<br>
+            {{ form.country() }}
+        </p>
+        <p>
+            {{ form.about.label }}<br>
+            {{ form.about() }}
+        </p>
+        <p>
+            {{ form.submit() }}
+        </p>
+    </form>
+
+
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Page</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+
+    <h1>Welcome to the Admin Page</h1>
+    <ul>
+        <li><a href="{{ url_for('main.index') }}">Home</a></li>
+        <li><a href="{{ url_for('main.restricted') }}">Restricted Area</a></li>
+        <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
+    </ul>
+    <hr>
+    <h2>Users</h2>
+    <table>
+        <!-- Display the 'users' table entries in a table format -->
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>State</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>{{ user.state }}</td>
+                    <td>
+                        <button class="save-btn" type="button">Save</button>
+                        <button class="discard-btn" type="button">Discard</button>
+                        <button class="delete-btn" type="button">Delete</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button class="insert-btn" type="button">Insert New Row</button>
+    <hr>
+    <h2>Chatbots</h2>
+    <table>
+        <!-- Display the 'chatbots' table entries in a table format -->
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>System Prompt</th>
+                <th>Avatar Path</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chatbot in chatbots %}
+                <tr>
+                    <td>{{ chatbot.id }}</td>
+                    <td>{{ chatbot.name }}</td>
+                    <td>{{ chatbot.systemprompt }}</td>
+                    <td>{{ chatbot.avatarpath }}</td>
+                    <td>
+                        <button class="save-btn" type="button">Save</button>
+                        <button class="discard-btn" type="button">Discard</button>
+                        <button class="delete-btn" type="button">Delete</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button class="insert-btn" type="button">Insert New Row</button>
+
+
+</body>
+</html>

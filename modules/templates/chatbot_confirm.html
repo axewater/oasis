@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<title>Confirm Bot</title>
+
+<body>
+        <div class="flashes">
+        {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        </div>
+
+<div class="title-confirm">
+    <h1>Bot configuration</h1>
+
+    <h2 class="content">{{ bot_name }}</h2>
+    <div>
+        <img src="{{ url_for('static', filename=avatar_path) }}" alt="{{ bot_name }}" class="img-fluid">
+    </div>
+    <div>
+        <p class="content">{{ systemprompt|nl2br }}</p>
+    </div>
+    <h3>Do you want to save this chatbot to the gallery?</h3>
+
+    <div container-buttons-chatbotconfirm>
+        <form action="{{ url_for('main.save_bot') }}" method="post">
+            <button type="submit" class="button">Save</button>
+        </form>
+    <form action="{{ url_for('main.delete_avatar', avatar_path=avatar_path) }}" method="post">
+        <button type="submit" class="button">Discard</button>
+    </form>
+
+    </div>
+</div>
+</body>
+</html>
+{% endblock %}

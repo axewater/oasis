@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<head>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flashes">
+        {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Prism CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism.min.css" rel="stylesheet" />
+
+    <!-- Prism JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-python.min.js"></script>
+    <!-- Add more prism-*.min.js for other languages -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+<body>
+    <div class="chatroom-container-glass">
+        <div class="chatroom-header">
+            Chatroom:
+            {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('main.edit_chatbot', id=bot.id) }}" class="chatroom-link">{{ bot.name }}</a>
+            {% else %}
+                <a href="{{ url_for('main.chatbot_detail', id=bot.id) }}" class="chatroom-link">{{ bot.name }}</a>
+            {% endif %}
+            <button id="clear-chat-button" class="button-glass" onclick="clearChat()">Clear Chat</button>
+        </div>
+    
+        <div class="chatroom-messages-glass">
+            <!-- Messages will be added dynamically by JavaScript -->
+        </div>
+    
+        <div class="chatroom-container-input">
+            <form id="chat-form">
+                <textarea class="input-glass" placeholder="What would you like to say..." id="user-message"></textarea>
+                <button type="submit" class="button-glass button-send">SEND</button>
+            </form>
+        </div>
+    </div>
+
+<script>
+    var bot_id = "{{ bot.id }}";
+    var voicetype = "{{ bot.voicetype }}";
+    var previousMessages = {{ messages|tojson|safe }};
+    var thread_id = "{{ thread_id }}";
+    var speech_enabled = {{ speech_enabled|tojson|safe }};
+    var tts_engine = "{{ current_user.tts_engine }}";
+    var avatarpath_thumbnail = "{{ avatarpath_thumbnail }}";
+    var avatarpath = "{{ avatarpath }}";
+    sessionStorage.setItem("user_role", "{{ user_role }}");
+    sessionStorage.setItem("chatbot_detail_url", "{{ url_for('main.chatbot_detail', id=bot.id) }}");
+    sessionStorage.setItem("chatbot_edit_url", "{{ url_for('main.edit_chatbot', id=bot.id) }}");
+    sessionStorage.setItem("avatar_html", "{{ avatar_html.replace('"', '\\"')|safe }}");
+    if(thread_id != 'None') {
+        sessionStorage.setItem('thread_id', thread_id);
+    }
+</script>
+<script src="{{ url_for('static', filename='js/chatroom.js') }}"></script>
+
+</body>
+
+{% endblock %}

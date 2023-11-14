@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <title>Confirm Bot</title>
+</head>
+<body>
+    <h1>Confirm Bot</h1>
+    <style>
+        .light-grey-background {
+            background-color: #f0f0f0; /* Adjust this to the shade of grey you want */
+            padding: 10px; /* Add some padding so the text isn't right up against the edge of the background */
+        }
+    </style>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    <h2 class="light-grey-background">{{ bot_name }}</h2>
+    <p class="light-grey-background">{{ systemprompt|nl2br }}</p>
+
+    <h3>Do you want to save this chatbot to the gallery?</h3>
+
+    <form action="{{ url_for('main.save_bot') }}" method="post">
+        <input type="hidden" name="bot_name" value="{{ bot_name }}">
+        <input type="hidden" name="systemprompt" value="{{ systemprompt }}">
+        <button type="submit" class="button">Save</button>
+    </form>
+
+    <form action="{{ url_for('main.bot_generator') }}" method="get">
+        <button type="submit" class="button">Discard</button>
+    </form>
+
+</body>
+</html>
+{% endblock %}

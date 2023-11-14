@@ -1,0 +1,41 @@
+<!-- in templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>Oasis</title>
+    {% block styles %}
+    <link rel="stylesheet" href="/static/css/newstyle.css">
+    {% endblock %}
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.27.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.27.0/prism.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+
+</head>
+<body>
+    <nav class="menu">
+        {% if current_user.is_authenticated %}
+            <button class="button-glass"><i class="fas fa-comments"></i> <a href="/chatbot_browser">Chat</a></button>
+            <button class="button-glass"><i class="fas fa-hammer"></i> <a href="/bot_generator">Build</a></button>
+            <button class="button-glass"><i class="fas fa-gamepad"></i> <a href="/games/game_selection">Games</a></button>
+            <button class="button-glass"><i class="fas fa-user-circle"></i> <a href="/settings_account">Account</a></button>
+            <button class="button-glass"><i class="fas fa-sign-out-alt"></i> <a href="/logout">Logout</a></button>
+            {% if current_user.role == 'admin' %}
+                <button class="button-glass"><i class="fas fa-user-shield"></i> <a href="/admin_main">Admin</a></button>
+            {% endif %}
+        {% else %}
+            <button class="button-glass"><i class="fas fa-sign-in-alt"></i> <a href="/login">Login</a></button>
+            <button class="button-glass"><i class="fas fa-user-plus"></i> <a href="/register">Register</a></button>
+        {% endif %}
+        <button class="button-glass"><i class="fas fa-question-circle"></i> <a href="/help">Help</a></button>
+    </nav>
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

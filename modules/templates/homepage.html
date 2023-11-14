@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="messages">
+    <div class="ai">
+        {% if current_user.is_authenticated %}
+        <div class="speech-bubble ai">
+    Welcome back, {{ current_user.name }}!
+    It's great to have you here again.
+    We hope you're ready for an amazing experience.
+    If you have any questions or need assistance, feel free to ask.
+    Enjoy your time on Persona Super Chat!
+
+    (this text never displays on the site, it gets overriden)
+    put your text in restricted_area.html instead
+
+
+        </div>
+        <div>
+            {% else %}
+                {% include 'login.html' %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

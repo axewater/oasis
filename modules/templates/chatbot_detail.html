@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+        <div class="flashes">
+        {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        </div>
+
+
+<div class="container-chatbot-edit">
+
+        <h1>{{ chatbot.name }} <i class="fa fa-heart favorite-icon" style="color: {{ 'rgba(255, 105, 97, 1)' if is_favorite else 'rgba(0, 0, 0, 0.5)' }}" onclick="favoriteChatbot(this)" data-chatbot-id="{{ chatbot.id }}"></i>
+        </h1>
+       <div class="profile_avatar">
+            <img src="{{ url_for('static', filename=chatbot.avatarpath) }}" alt="{{ chatbot.name }}" class="img-fluid">
+            <p>(Language Model: {{ chatbot.llm_model }})</p>
+        </div>
+        <button type="button" class="button" onclick="location.href='/chatroom/{{ chatbot.id }}'">Chat</button>
+        {% if current_user.role == 'admin' %}
+            <button type="button" class="button" onclick="location.href='/chatbots/edit/{{ chatbot.id }}'">Edit</button>
+        {% endif %}
+        <button type="button" class="button" onclick="location.href='/chatbot_browser'">Back</button>
+
+    <div class="chatbotcards-prompt-container">
+        <p>{{ chatbot.systemprompt }}</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chatbot_favorite.js') }}"></script>
+
+{% endblock %}

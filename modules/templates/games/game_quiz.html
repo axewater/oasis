@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block styles %}
+{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" type="text/css" href="/static/css/game_styles.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js"></script> <!-- Include Lodash -->
+<script src="/static/js/game_quiz.js"></script>
+<script>
+    var token = "{{ token|safe }}";  // The token is inserted by the server
+    console.log("Token:", token);  // Print token to the console
+</script>
+
+<div class="flashes">
+    <ul class="flash-messages"></ul>
+</div>
+
+<div class="game-container">
+
+    <div class="logo-container">
+        <img src="/static/images/quizlogo.jpg" alt="Quiz logo">
+        <h2 class="title">Quiz Game</h2>
+    </div>
+
+    <div class="game-header">
+        Current highscores :
+        <table class="game-highscores">
+            <!-- Highscores will be inserted here -->
+        </table>
+    </div>
+
+    <div class="lifelines" style="display: none;">
+      <button class="lifeline-btn" id="fiftyFifty">50/50</button>
+      <button class="lifeline-btn" id="askAudience">Ask the Audience</button>
+      <button class="lifeline-btn" id="askGpt">Ask GPT</button>
+      <button class="lifeline-btn" id="freezeTimer">Freeze Timer</button>
+    </div>
+
+
+    <div id="difficultySelection" class="container-difficulty">
+        <button class="difficulty-easy difficulty" id="easy">Easy</button>
+        <button class="difficulty-medium difficulty" id="medium">Medium</button>
+        <button class="difficulty-hard difficulty" id="hard">Hard</button>
+    </div>
+
+    <div id="score" style="display: none;">
+        <p id="finalScore"></p>
+        <p id="submissionStatus"></p>
+    </div>
+
+    <div id="quiz" style="display: none;">
+        <div class="game-main">
+            <p id="scoreValue">Current Score: 0</p>
+            <p id="timer">Timer: 10</p> <!-- Timer display -->
+            <p id="question"></p>
+            <div id="answers"></div> <!-- Answer buttons will be inserted here -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}

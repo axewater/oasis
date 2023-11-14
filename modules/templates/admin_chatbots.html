@@ -1,0 +1,110 @@
+{% extends "admin.html" %}
+
+{% block content %}
+    <!-- Add the form for editing, saving, discarding, deleting, and inserting rows in the 'chatbots' table -->
+    <form id="chatbots-form">
+        <table>
+            <!-- Display the 'chatbots' table entries in a table format -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>System Prompt</th>
+                    <th>Avatar Path</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chatbot in chatbots %}
+                    <tr>
+                        <td>{{ chatbot.id }}</td>
+                        <td>
+                            <input type="text" name="name" value="{{ chatbot.name }}">
+                            <input type="hidden" name="chatbot_id" value="{{ chatbot.id }}">
+                        </td>
+                        <td>
+                            <input type="text" name="systemprompt" value="{{ chatbot.systemprompt }}">
+                        </td>
+                        <td>
+                            <input type="text" name="avatarpath" value="{{ chatbot.avatarpath }}">
+                        </td>
+                        <td>
+                            <button class="save-btn" type="button">Save</button>
+                            <button class="discard-btn" type="button">Discard</button>
+                            <button class="delete-btn" type="button">Delete</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button class="insert-btn" type="button">Insert New Row</button>
+    </form>
+
+    <script>
+        // JavaScript code for handling form submission and interaction
+        // Bind event listeners to the buttons
+        const form = document.getElementById('chatbots-form');
+        const saveButtons = form.getElementsByClassName('save-btn');
+        const discardButtons = form.getElementsByClassName('discard-btn');
+        const deleteButtons = form.getElementsByClassName('delete-btn');
+        const insertButton = form.getElementsByClassName('insert-btn')[0];
+
+        // Function to send the form data via AJAX
+        function submitForm(formData) {
+            fetch('/admin/chatbots', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'X-CSRFToken': '{{ csrf_token() }}'  // Include CSRF token
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response data as needed
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Event listeners for Save buttons
+        for (const button of saveButtons) {
+            button.addEventListener('click', () => {
+                const row = button.closest('tr');
+                const formData = new FormData(form);
+                formData.append('operation', 'save');
+                formData.append('chatbot_id', row.querySelector('input[name="chatbot_id"]').value);
+                submitForm(formData);
+            });
+        }
+
+        // Event listeners for Discard buttons
+        for (const button of discardButtons) {
+            button.addEventListener('click', () => {
+                const formData = new FormData(form);
+                formData.append('operation', 'discard');
+                submitForm(formData);
+            });
+        }
+
+        // Event listeners for Delete buttons
+        for (const button of deleteButtons) {
+            button.addEventListener('click', () => {
+                const row = button.closest('tr');
+                const formData = new FormData(form);
+                formData.append('operation', 'delete');
+                formData.append('chatbot_id', row.querySelector('input[name="chatbot_id"]').value);
+                submitForm(formData);
+            });
+        }
+
+        // Event listener for Insert New Row button
+        insertButton.addEventListener('click', () => {
+            const formData = new FormData(form);
+            formData.append('operation', 'insert');
+            submitForm(formData);
+        });
+    </script>
+{% endblock %}

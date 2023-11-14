@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<html>
+  <link rel="stylesheet" href="/static/css/styles.css">
+
+<body>
+<div class="container-home">
+    <div class="messages">
+        <div class="ai">
+            <div class="speech-bubble ai">
+                <div class="content-help">
+                    <h1 class="content-help">Help !</h1>
+                    Thank you for using our website during this closed beta phase. We appreciate your participation and hope to provide you with a valuable experience. As we continue to improve and develop the platform, we would like to inform you about a few important details.
+
+
+<b class="white-bg">1. Navigating the Website:</b>
+To navigate the website, please use the menu located at the top of the page. It provides easy access to different sections and features.
+
+- <b class="white-bg">Chat</b>: Visit the "Chat" section to find a gallery of chatbots featuring famous people. You can use the search function to filter by name and even mark your favorite bots using the heart icon. We are actively expanding our library and working on implementing tags to improve browsing capabilities.
+
+- <b class="white-bg">Botmaker</b>: Click on "Botmaker" in the menu to create your own persona. Simply type the name of a famous person, and our app will generate a description and image for your review. This feature is experimental, and we value your feedback to help us refine it.
+
+<b class="white-bg">2. Whitelisted Email Addresses:</b>
+Our website allows registration only for whitelisted email addresses. This is because the chat interface utilizes a personal OpenAI API key, and we cover the associated costs. We apologize for any inconvenience caused by this restriction.
+
+<b class="white-bg">3. Beta Phase and Potential Bugs:</b>
+Please be aware that as we are still in beta, there may be occasional bugs or issues with the platform. We are working diligently to address these problems. Your patience and feedback are greatly appreciated in helping us enhance your experience.
+
+<b class="white-bg">4. Potential Data Loss during Upgrades:</b>
+During the development process, we may introduce newer versions that are not backward compatible. As a result, there is a possibility of losing messages or bots you have created. We apologize for any inconvenience this may cause and recommend keeping backups of your important content.
+
+<b class="white-bg">5. Message Storage and Encryption:</b>
+Please note that all your messages are logged and stored without encryption. However, we want to assure you that we do not store any passwords in plain text. During account setup, your password was hashed and salted, ensuring it remains secure at all times.
+
+<b class="white-bg">User Types:</b>
+
+- <b class="white-bg">Trail Users</b>: Upon registration, you will receive 100 free AI responses. After exhausting this limit, you will be prompted to upgrade. Rest assured, your messages will be saved throughout.
+
+- <b class="white-bg">Power Users</b>: Enjoy unlimited message quota and the ability to manually edit bots. Additionally, as a power user, you gain access to the GPT4 bot creation feature, which is exclusive to this user type.
+
+- <b class="white-bg">Admin Users</b>: Admin users have no quotas and possess the ability to delete bots, messages, and users as needed.
+
+For more detailed information about pricing and user types, please refer to our Pricing Page.
+
+Thank you for choosing our platform. If you have any further questions or encounter any issues, please don't hesitate to contact our support team. We value your feedback and are committed to making your experience enjoyable and productive.
+
+<br>
+<br>
+Known issues list:
+
+Settings window is functional, settings are saved but API keys are not used.
+Male / female TTS voice selection
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+  </body>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-base">
+    <div class="flashes">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="container-browser">
+        <div class="container-filters">
+            <input type="text" id="search-input" class="input-glass" oninput="setSearchFilter(this.value)" placeholder="Search Chatbots" />
+            <label class="checkbox-glass">
+                Favs
+                <input type="checkbox" class="favorites-only-input" id="favorites-only-input" onchange="setFavoritesOnly(this.checked)" />
+            </label>
+            
+            <div class="container-pagination" id="pagination">
+                <!-- Pagination will be inserted here -->
+            </div>
+        </div>
+        
+        <div id="chatbot-grid" class="container-chatbotcards">
+            <!-- Chatbots will be inserted here -->
+        </div>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chatbot_browser.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.2.1/typeahead.bundle.min.js"></script>
+{% endblock %}

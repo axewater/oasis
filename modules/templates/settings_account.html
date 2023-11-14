@@ -1,0 +1,60 @@
+<!-- in templates/settings_account.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+{% include "settings_navbar.html" %}
+
+<div class="container-settings-account">
+        <div class="content-flash">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="flashes">
+                {% for message in messages %}
+                <div class="flash">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+    <br>
+    <h2>My Account</h2>
+    <br>
+    <form id="user-detail-form" method="POST">
+  {{ form.csrf_token }}
+
+    <p>Created: {{ user.created.strftime('%Y-%m-%d') }}</p>
+    <p>Subscription: {{ user.role }}</p>
+    <p>Message Quota: {{ user.quota_messages }}</p>
+    <p>Messages usage: {{ user.count_messages }}</p>
+
+    <p>
+        <br>
+        <label class="label" for="tts_engine">TTS Engine</label><br>
+        <select id="tts_engine" name="tts_engine" class="input-tts">
+            <option value="">Select an option</option>
+            <option value="webspeech" {{ 'selected' if user.tts_engine == 'webspeech' else '' }}>Webspeech (local/free)</option>
+            <option value="gcloud" {{ 'selected' if user.tts_engine == 'gcloud' else '' }}>Google Cloud (paid) $</option>
+            <option value="11labs" {{ 'selected' if user.tts_engine == '11labs' else '' }}>11 Labs (paid) $$</option>
+        </select>
+
+    </p>
+    <p>
+    <br>
+        <label class="label">Speech</label><br>
+        <input type="radio" id="speech_enabled_on" name="speech_enabled" value="True" {{ 'checked' if user.speech_enabled else '' }}>
+        <label for="speech_enabled_on">Enabled</label><br>
+        <input type="radio" id="speech_enabled_off" name="speech_enabled" value="False" {{ 'checked' if not user.speech_enabled else '' }}>
+        <label for="speech_enabled_off">Disabled</label><br>
+
+    </p>
+
+
+
+
+    <input type="submit" class="button" value="Save">
+    <button class="button" onclick="location.reload()">Cancel</button>
+    </form>
+</div>
+
+{% endblock %}

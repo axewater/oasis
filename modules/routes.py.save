@@ -1,0 +1,535 @@
+
+
+# modules/routes.py
+from flask_wtf import FlaskForm
+from sqlalchemy.exc import IntegrityError, OperationalError
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, Length
+from flask import render_template, flash, redirect, url_for, request, Blueprint, jsonify, session
+from flask_login import current_user, login_user, logout_user, login_required
+from werkzeug.urls import url_parse
+from modules import db
+from modules.models import User, Whitelist, Chatbot, Blacklist
+from modules import limiter
+import re
+
+import openai
+from flask import abort
+
+bp = Blueprint('main', __name__)
+openai.api_key = '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'
+
+# Define the RegistrationForm class
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
+    submit = SubmitField('Register')
+
+@bp.route('/', methods=['GET', 'POST'])
+@bp.route('/index', methods=['GET', 'POST'])
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.restricted'))
+    if request.method == 'POST':
+        user = User.query.filter_by(name=request.form['username']).first()
+        if user is None or not user.check_password(request.form['password']):
+            flash('Invalid username or password')
+            return redirect(url_for('main.index'))
+        login_user(user)
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('main.restricted')
+        return redirect(next_page)
+    return render_template('homepage.html', title='Home Page')
+
+@bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        try:
+            # check if email is in whitelist
+            whitelist = Whitelist.query.filter_by(email=form.email.data).first()
+            if not whitelist:
+                flash('Your email is not whitelisted.')
+                return redirect(url_for('main.register'))
+
+            existing_user = User.query.filter_by(name=form.username.data).first()
+            if existing_user is not None:
+                flash('User already exists. Please Log in.')
+                return redirect(url_for('main.register'))
+
+            # Create a new User object with role set to a default value (e.g., 'user')
+            user = User(
+                name=form.username.data,
+                email=form.email.data,
+                role='user'
+            )
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash('Congratulations, you are now a registered user!')
+            return redirect(url_for('main.index'))
+        except IntegrityError:
+            db.session.rollback()
+            flash('An error occurred while registering. Please try again.')
+    return render_template('registration.html', title='Register', form=form)
+
+@bp.route('/restricted')
+@login_required
+def restricted():
+    return render_template('restricted_area.html', title='Restricted Area')
+
+@bp.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))
+
+@bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.restricted'))
+    if request.method == 'POST':
+        user = User.query.filter_by(name=request.form['username']).first()
+        if user is None or not user.check_password(request.form['password']):
+            flash('Invalid username or password')
+            return redirect(url_for('main.login'))
+        login_user(user)
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('main.restricted')
+        return redirect(next_page)
+    return render_template('login.html', title='Log In')
+@bp.route('/bot_generator', methods=['GET', 'POST'])
+@login_required
+def bot_generator():
+    if request.method == 'POST':
+        bot_name = request.form['bot_name']
+        if not bot_name:
+            flash('Please enter a bot name')
+            return redirect(url_for('main.bot_generator'))
+
+        systemprompt, error = generate_system_prompt(bot_name)
+
+        if error:
+            flash(error)
+            return render_template('bot_generator.html', title='Bot Generator')
+
+        session['bot_name'] = bot_name
+        session['systemprompt'] = systemprompt
+        return redirect(url_for('main.confirm_bot'))
+
+    return render_template('bot_generator.html', title='Bot Generator')
+
+
+
+@bp.route('/create_bot', methods=['POST'])
+@login_required
+def create_bot():
+    bot_name = request.form['bot_name']
+
+    if not valid_bot_name(bot_name):
+        flash('''Invalid bot name. 
+                Use only letters and - or \' 
+                ''')
+        return redirect(url_for('main.bot_generator'))
+
+    existing_bot = Chatbot.query.filter_by(name=bot_name).first()
+
+    if existing_bot:
+        flash('A bot with this name already exists.')
+        return redirect(url_for('main.bot_generator'))
+
+    flash('Sending API request...')
+    try:
+        systemprompt, error = generate_system_prompt(bot_name)
+
+        if error:
+            print(f"Error: {error}")
+            flash(f"Error: {error}")
+            return redirect(url_for('main.bot_generator'))
+
+        print(f"API request: {bot_name}")
+
+        # Replace the API response
+        systemprompt = systemprompt.replace("I am", "You are")
+        systemprompt = systemprompt.replace(" I ", " You ")
+
+        # Store bot information in the session
+        session['bot_name'] = bot_name
+        session['systemprompt'] = systemprompt
+
+        print(f"Bot Name: {bot_name}")
+        print(f"System Prompt: {systemprompt}")
+
+        flash('Bot information generated successfully!')
+    except OperationalError:
+        flash('There was a problem connecting to the database.')
+    except IOError:
+        flash('There was a problem with file operations.')
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        flash('An unexpected error occurred.')
+
+    return redirect(url_for('main.confirm_bot'))
+
+
+@bp.route('/save_bot', methods=['POST'])
+@login_required
+def save_bot():
+    if request.method == 'POST':
+        bot_name = session.get('bot_name')
+        systemprompt = session.get('systemprompt')
+        try:
+            existing_bot = Chatbot.query.filter_by(name=bot_name).first()
+
+            if existing_bot:
+                flash('A bot with this name already exists.')
+                return redirect(url_for('main.bot_generator'))
+
+            new_bot = Chatbot(name=bot_name, systemprompt=systemprompt, avatarpath="default_avatar.jpg")
+            db.session.add(new_bot)
+            db.session.commit()
+            print(f"New bot saved: \nName: {bot_name} \nSystemprompt: {systemprompt}")
+            flash('Bot has been saved successfully!')
+
+            # Clear session data to avoid accidental creation of duplicate bots
+            session.pop('bot_name', None)
+            session.pop('systemprompt', None)
+        except OperationalError:
+            flash('There was a problem connecting to the database.')
+        except Exception as e:
+            flash('There was an error saving the bot.')
+            print(f"Error: {e}")
+            return redirect(url_for('main.bot_generator'))
+
+        return redirect(url_for('main.bot_generator'))
+
+
+@bp.route('/confirm_bot', methods=['GET', 'POST'])
+@login_required
+def confirm_bot():
+    if request.method == 'POST':
+        bot_name = session.get('bot_name')
+        systemprompt = session.get('systemprompt')
+        try:
+            new_bot = Chatbot(name=bot_name, systemprompt=systemprompt, avatarpath="default_avatar.jpg")
+            db.session.add(new_bot)
+            db.session.commit()
+            print(f"New bot saved: \nName: {bot_name} \nSystemprompt: {systemprompt}")
+            flash('Bot has been saved successfully!')
+        except Exception as e:
+            flash('There was an error saving the bot.')
+            print(f"Error: {e}")
+            return redirect(url_for('main.bot_generator'))
+        return redirect(url_for('main.bot_generator'))
+
+    bot_name = session.get('bot_name')
+    systemprompt = session.get('systemprompt')
+    return render_template('confirm_bot.html', title='Confirm Bot', bot_name=bot_name, systemprompt=systemprompt)
+
+
+# routes.py
+@bp.route('/chatroom')
+@login_required
+def chatroom():
+    bot = Chatbot.query.first()
+    return render_template('chatroom.html', title='Chatroom', bot=bot)
+
+
+@bp.route('/api/chat', methods=['POST'])
+@login_required
+def api_chat():
+    user_message = request.form['message']
+    bot = Chatbot.query.first()
+
+    try:
+        # API call to ChatGPT with the system prompt and user message
+        response = openai.ChatCompletion.create(
+          model="gpt-3.5-turbo",
+          messages=[
+                {"role": "system", "content": bot.systemprompt},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        # Extract the message from the AI's response
+        ai_message = response['choices'][0]['message']['content']
+
+        return jsonify(response=ai_message)
+
+    except Exception as e:
+        return jsonify(error=str(e))
+
+
+
+@bp.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html', title='Settings')
+
+@bp.route('/admin')
+@login_required
+def admin():
+    if current_user.role != 'admin':
+        flash('You do not have permission to access the admin pages.')
+        return redirect(url_for('main.restricted'))
+    return render_template('admin.html', title='Admin Pages')
+
+@bp.route('/admin/users', methods=['GET', 'POST'])
+@login_required
+def admin_users():
+    if current_user.role != 'admin':
+        flash('You do not have permission to access this resource.')
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        form_data = request.form
+        operation = form_data.get('operation')
+
+        if operation == 'save':
+            # Handle saving of changes
+            user_id = form_data.get('user_id')
+            # Retrieve the user entry from the database using user_id
+            user = User.query.get(user_id)
+            if user:
+                # Update the user details based on the form data
+                user.name = form_data.get('name')
+                user.email = form_data.get('email')
+                user.role = form_data.get('role')
+                user.state = form_data.get('state')
+                # Commit the changes to the database
+                try:
+                    db.session.commit()
+                    flash('Changes saved successfully.')
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Error occurred while saving changes.')
+                    print(f"Error: {str(e)}")
+            else:
+                flash('User not found.')
+
+        elif operation == 'discard':
+            # Handle discarding of changes
+            flash('Changes discarded.')
+
+        elif operation == 'delete':
+            # Handle deleting a row
+            user_id = form_data.get('user_id')
+            # Retrieve the user entry from the database using user_id
+            user = User.query.get(user_id)
+            if user:
+                # Delete the user entry from the database
+                try:
+                    db.session.delete(user)
+                    db.session.commit()
+                    flash('User deleted successfully.')
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Error occurred while deleting user.')
+                    print(f"Error: {str(e)}")
+            else:
+                flash('User not found.')
+
+        elif operation == 'insert':
+            # Handle inserting a new row
+            name = form_data.get('name')
+            email = form_data.get('email')
+            role = form_data.get('role')
+            state = form_data.get('state')
+            # Create a new User object with the form data
+            new_user = User(name=name, email=email, role=role, state=state)
+            # Add the new_user to the session and commit the changes to the database
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                flash('New user inserted successfully.')
+            except Exception as e:
+                db.session.rollback()
+                flash('Error occurred while inserting new user.')
+                print(f"Error: {str(e)}")
+
+        # Return a JSON response indicating the result of the form submission
+        return jsonify({'status': 'success'})
+
+    # Retrieve existing user entries from the 'users' table
+    users = User.query.all()
+
+    return render_template('admin_users.html', title='Admin - Users', users=users)
+@bp.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@bp.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@bp.route('/admin/chatbots', methods=['GET', 'POST'])
+@login_required
+def admin_chatbots():
+    if current_user.role != 'admin':
+        flash('You do not have permission to access this resource.')
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        form_data = request.form
+        operation = form_data.get('operation')
+
+        if operation == 'save':
+            # Handle saving of changes
+            chatbot_id = form_data.get('chatbot_id')
+            # Retrieve the chatbot entry from the database using chatbot_id
+            chatbot = Chatbot.query.get(chatbot_id)
+            if chatbot:
+                # Update the chatbot details based on the form data
+                chatbot.name = form_data.get('name')
+                chatbot.systemprompt = form_data.get('systemprompt')
+                chatbot.avatarpath = form_data.get('avatarpath')
+                # Commit the changes to the database
+                try:
+                    db.session.commit()
+                    flash('Changes saved successfully.')
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Error occurred while saving changes.')
+                    print(f"Error: {str(e)}")
+            else:
+                flash('Chatbot not found.')
+
+        elif operation == 'discard':
+            # Handle discarding of changes
+            flash('Changes discarded.')
+
+        elif operation == 'delete':
+            # Handle deleting a row
+            chatbot_id = form_data.get('chatbot_id')
+            # Retrieve the chatbot entry from the database using chatbot_id
+            chatbot = Chatbot.query.get(chatbot_id)
+            if chatbot:
+                # Delete the chatbot entry from the database
+                try:
+                    db.session.delete(chatbot)
+                    db.session.commit()
+                    flash('Chatbot deleted successfully.')
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Error occurred while deleting chatbot.')
+                    print(f"Error: {str(e)}")
+            else:
+                flash('Chatbot not found.')
+
+        elif operation == 'insert':
+            # Handle inserting a new row
+            name = form_data.get('name')
+            systemprompt = form_data.get('systemprompt')
+            avatarpath = form_data.get('avatarpath')
+            # Create a new Chatbot object with the form data
+            new_chatbot = Chatbot(name=name, systemprompt=systemprompt, avatarpath=avatarpath)
+            # Add the new_chatbot to the session and commit the changes to the database
+            try:
+                db.session.add(new_chatbot)
+                db.session.commit()
+                flash('New chatbot inserted successfully.')
+            except Exception as e:
+                db.session.rollback()
+                flash('Error occurred while inserting new chatbot.')
+                print(f"Error: {str(e)}")
+
+        # Return a JSON response indicating the result of the form submission
+        return jsonify({'status': 'success'})
+
+    # Retrieve existing chatbot entries from the 'chatbots' table
+    chatbots = Chatbot.query.all()
+
+    return render_template('admin_chatbots.html', title='Admin - Chatbots', chatbots=chatbots)
+
+
+def valid_bot_name(bot_name):
+    if len(bot_name) > 100:
+        error = "Bot name should be less than or equal to 100 characters."
+        return False, error
+
+    if not re.match("^[A-Za-z0-9 '-]+$", bot_name):
+        error = "Bot name can only contain letters, numbers, spaces, hyphens, and apostrophes."
+        return False, error
+
+    return True, None
+
+def generate_system_prompt(bot_name):
+    if Blacklist.query.filter(Blacklist.banned_name.ilike(f"%{bot_name}%")).first() is not None:
+        return None, 'This name is not allowed. Please try a different name.'
+    try:
+        content = f'''
+        You are personality generator.
+        You will be given the name of a famous person.
+        You will Write a personality file about that person according to protocol.
+        Personality files adhere to a strict protocol for their structure and syntax.
+        You are only allowed to change the text between the brackets.
+        DO NOT CHANGE 'You are' with 'I AM'
+        Fill in what is between the brackets with what you know about the person.
+        You are [famous persons name]
+        - You will only answer like you are [name of famous person]. Do not write explanations.
+        - Always write in talking style, not written style.
+        - [insert 1 line summary about the famous person]
+        - You are well known for [what person is famous for]
+        - Your goal in life is [life goal of the famous person]
+        - Your manner of talking is [typical manner of talking]
+        - You use the words [insert words that the famous person tends to use] a lot
+        - Your personality type is [personality type of the famous person]
+        Start with the following famous person: {bot_name}
+        '''
+        chat = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": content},
+                {"role": "user", "content": f"{bot_name}"}
+            ],
+            max_tokens=200,
+            temperature=0.9,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        print(f"Request to OpenAI API: \n{chat}")
+        systemprompt = chat['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"Error: {e}")
+        return None, 'There was an error generating the bot.'
+
+    return systemprompt, None
+
+@bp.route('/add_to_whitelist', methods=['GET'])
+def add_to_whitelist():
+    if request.args.get('password') != 'ffemailtjestoevoegen':
+        abort(403)
+    emails = ["kashif.rasib@nomios.co.uk", "falkovanraaij@gmail.com", "ilonabogusz2@gmail.com"]  # Add your emails here
+    added_emails = []
+    existing_emails = []
+
+    for email in emails:
+        entry = Whitelist.query.filter_by(email=email).first()
+        if entry:
+            existing_emails.append(email)
+        else:
+            new_entry = Whitelist(email=email)
+            db.session.add(new_entry)
+            added_emails.append(email)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        error_message = "An error occurred while adding emails to the whitelist."
+        print(f"Error: {e}")
+        return error_message, 500
+
+    message = "Emails added successfully."
+    if added_emails:
+        message += f" Added emails: {', '.join(added_emails)}"
+    if existing_emails:
+        message += f" Emails already exist: {', '.join(existing_emails)}"
+
+    return message, 200

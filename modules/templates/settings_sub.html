@@ -1,0 +1,24 @@
+<!-- in templates/settings_sub.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+{% include "settings_navbar.html" %}
+<div class="container-settings-sub">
+    <br>
+    <h2>My Subscription</h2>
+    <br>
+    A premium subscription provides access to GPT4 bots, Chatbot editing and unlimited messages !<br>
+    <div class="role-container">
+        <div class="role-box {% if role == 'user' %}highlight{% endif %}" onclick="window.location.href='{% if role != 'user' %}/settings_pricing{% endif %}'">
+            <h3>Trial</h3>
+        </div>
+        <div class="role-box {% if role == 'premium' or role == 'admin' %}highlight{% endif %}" onclick="window.location.href='{% if role != 'premium' and role != 'admin' %}/settings_pricing{% endif %}'">
+            <h3>Premium</h3>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
