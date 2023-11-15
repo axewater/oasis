@@ -5,7 +5,7 @@
 {% block content %}
 {% include "settings_navbar.html" %}
 
-<div class="container-settings">
+<div class="container-builder">
   <div class="content-flash">
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -30,20 +30,20 @@
       <br>
       <br>
       <label class="label" for="openai_api_key">OpenAI API Key</label><br>
-      <input id="openai_api_key" name="openai_api_key" type="text" value="{{ form.openai_api_key.data }}" class="input-generate"><br>
+      <input id="openai_api_key" name="openai_api_key" type="text" value="{{ form.openai_api_key.data }}" class="input-glass"><br>
       <p>
         <br>
         Current GCloud API Key: {{ current_user.gcloud_api_key or 'NONE SAVED' }}<br>
         <br>
         <label class="label" for="gcloud_api_key">GCloud API Key</label><br>
-        <input id="gcloud_api_key" name="gcloud_api_key" type="text" value="{{ form.gcloud_api_key.data }}" class="input-generate"><br>
+        <input id="gcloud_api_key" name="gcloud_api_key" type="text" value="{{ form.gcloud_api_key.data }}" class="input-glass"><br>
       </p>
       <p>
-        <button type="submit" class="button">Save Changes</button>
+        <button type="submit" class="button-glass">Save Changes</button>
       </p>
     </form>
     <form action="{{ url_for('main.settings') }}" method="get">
-      <button type="submit" class="delete-button">Cancel Changes</button>
+      <button type="submit" class="button-glass">Cancel Changes</button>
     </form>
   </div>
 </div>

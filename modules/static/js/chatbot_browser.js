@@ -28,20 +28,35 @@ window.onload = async function () {
   favoriteChatbots = new Set(favorites);
   console.log('Favorites:', favorites);
 
+  const tagsResponse = await fetch('/api/common_tags');
+  const commonTags = await tagsResponse.json();
+
+  renderTagButtons(commonTags);
   renderChatbots();
   renderPagination();
 };
 
+function renderTagButtons(tags) {
+  const container = document.querySelector('.container-tagbuttons');
+  tags.forEach(tag => {
+      const button = document.createElement('button');
+      button.textContent = tag;
+      button.classList.add('button-glass');
+      button.onclick = () => applyTagFilter(tag);
+      container.appendChild(button);
+  });
+}
+
+
 function renderChatbots() {
     console.log("renderChatbots function called");
 
-    // Retrieve the list of voted chatbots from local storage
     const votedChatbots = JSON.parse(localStorage.getItem("votedChatbots")) || [];
 
     filteredChatbots = chatbots.filter(chatbot => {
         const nameMatchesSearch = chatbot.name.toLowerCase().includes(searchFilter.toLowerCase());
         const tagMatchesSearch = chatbot.tags.some(tag => tag.toLowerCase().includes(searchFilter.toLowerCase()));
-        const matchesSearch = nameMatchesSearch || tagMatchesSearch; // either the name or the tags match the search filter
+        const matchesSearch = nameMatchesSearch || tagMatchesSearch; 
 
         const isFavorite = favoriteChatbots.has(chatbot.id);
         const tagMatchesFilter = Array.from(tagFilter).every(val => chatbot.tags.includes(val));
@@ -52,7 +67,6 @@ function renderChatbots() {
         return matchesSearch && (!favoritesOnly || isFavorite) && tagMatchesFilter;
     });
 
-  // Sort chatbots based on rating, highest first
   filteredChatbots = filteredChatbots.sort((a, b) => b.rating - a.rating);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -68,8 +82,8 @@ function renderChatbots() {
     let deleteButton = '';
     let editButton = '';
     let rating = chatbot.rating;
-    let tags = chatbot.tags.map(tag => `<span class="tag" onclick="applyTagFilter('${tag}')">#${tag}</span>`).join(' ');
-    let voteDisabled = votedChatbots.includes(chatbot.id) ? 'disabled' : ''; // Check if the user has voted for this chatbot
+    let tags = chatbot.tags.map(tag => `<div class="tag-container"><span class="tag" onclick="applyTagFilter('${tag}')">#${tag}</span></div>`).join(' ');
+    let voteDisabled = votedChatbots.includes(chatbot.id) ? 'disabled' : ''; 
     let voteClass = voteDisabled ? 'button-disabled' : '';
 
     if (userRole === 'admin') {
@@ -78,41 +92,37 @@ function renderChatbots() {
     }
 
     const chatbotCard = `
-    <div class="glass-panel chatbot-card" data-id="${chatbot.id}">
+    <div class="chatbot-card" data-id="${chatbot.id}">
+  
+    <h3 class="chatbot-name">${chatbot.name}</h3>
+    <div class="chatbot-details">
       <div class="chatbot-avatar-container">
         <img class="chatbot-avatar" src="/static/${chatbot.avatarpath}" alt="${chatbot.name}" />
+        <div class="favorite-container">
+        <i class="fa fa-heart favorite-icon" onclick="favoriteChatbot(${chatbot.id})" style="color:${favoriteColorIndicator};"></i>
       </div>
-      <div class="chatbot-details">
-        <h3 class="chatbot-name">${chatbot.name}</h3>
+      </div>
+
         <div class="chatbot-tags">${tags}</div>
       </div>
-      <div class="chatbot-interact">
-        <div class="vote-container">
-          <button ${voteDisabled} class="vote-button thumbs-up ${voteClass}" onclick="vote(${chatbot.id}, 1)">
-            <i class="fas fa-thumbs-up"></i>
-          </button>
-          <button ${voteDisabled} class="vote-button thumbs-down ${voteClass}" onclick="vote(${chatbot.id}, -1)">
-            <i class="fas fa-thumbs-down"></i>
-          </button>
-        </div>
+      <div class="chatbot-voting">
+        <button ${voteDisabled} class="vote-button thumbs-up ${voteClass}" onclick="vote(${chatbot.id}, 1)">
+          <i class="fas fa-thumbs-up"></i>
+        </button>
+        <button ${voteDisabled} class="vote-button thumbs-down ${voteClass}" onclick="vote(${chatbot.id}, -1)">
+          <i class="fas fa-thumbs-down"></i>
+        </button>
         <div class="rating-container">
-          <span class="rating-value">Rating: ${rating}</span>
-        </div>
-        <div class="favorite-container">
-          <i class="fa fa-heart favorite-icon" onclick="favoriteChatbot(${chatbot.id})" style="color:${favoriteColorIndicator};"></i>
-        </div>
-        <div class="chatbot-actions">
-          <button type="button" class="button-glass-chat" onclick="location.href='/chatroom/${chatbot.id}'">Chat</button>
-          <button type="button" class="button-glass-view" onclick="location.href='/chatbots/${chatbot.id}'">View</button>
-          <button type="button" class="button-glass-edit" onclick="location.href='/chatbots/edit/${chatbot.id}'">Edit</button>
-          <button type="button" class="button-glass-delete" onclick="deleteChatbot(${chatbot.id})">Delete</button>
-        </div>
+        <span class="rating-value">Rating: ${rating}</span>
       </div>
     </div>
-  `;
-  
-  chatbotGrid.innerHTML += chatbotCard;
-s  
+      <div class="chatbot-actions">
+        <button type="button" class="button-glass-chat" onclick="location.href='/chatroom/${chatbot.id}'">Chat</button>
+        <button type="button" class="button-glass-view" onclick="location.href='/chatbots/${chatbot.id}'">View</button>
+        <button type="button" class="button-glass-edit" onclick="location.href='/chatbots/edit/${chatbot.id}'">Edit</button>
+        <button type="button" class="button-glass-delete" onclick="deleteChatbot(${chatbot.id})">Delete</button>
+      </div>
+    
   `;
   
   chatbotGrid.innerHTML += chatbotCard;
@@ -123,14 +133,12 @@ s
 async function vote(chatbotId, voteChange) {
     console.log(`vote function called with chatbotId: ${chatbotId}, voteChange: ${voteChange}`);
 
-    // Check if the user has already voted for this chatbot
     const votedChatbots = JSON.parse(localStorage.getItem('votedChatbots')) || [];
     if (votedChatbots.includes(chatbotId)) {
         console.log('User has already voted for this chatbot');
-        return; // Do nothing if the user has already voted
+        return; 
     }
 
-    // Use different routes for upvoting and downvoting
     let voteUrl;
     if (voteChange > 0) {
         voteUrl = `/api/chatbots/${chatbotId}/upvote`;
@@ -149,23 +157,19 @@ async function vote(chatbotId, voteChange) {
         console.log('Vote request succeeded');
         const data = await response.json();
         console.log(`Updated rating is: ${data.rating}`);
-        // Update the displayed rating for the chatbot
         console.log(`Update rating in chatbotCard ${chatbotId}`);
         const chatbotCard = document.querySelector(`.chatbot-card[data-id='${chatbotId}']`);
         const ratingValueElement = chatbotCard.querySelector('.rating-value');
         ratingValueElement.innerText = data.rating;
 
-        // Add the chatbot ID to the list of voted chatbots and save it in the local storage
         votedChatbots.push(chatbotId);
         localStorage.setItem('votedChatbots', JSON.stringify(votedChatbots));
 
-        // Disable the vote buttons
         const upvoteButton = chatbotCard.querySelector(`button[onclick="vote(${chatbotId}, 1)"]`);
         const downvoteButton = chatbotCard.querySelector(`button[onclick="vote(${chatbotId}, -1)"]`);
         upvoteButton.disabled = true;
         downvoteButton.disabled = true;
 
-        // Add the "button-disabled" class to visually disable the buttons
         upvoteButton.classList.add('button-disabled');
         downvoteButton.classList.add('button-disabled');
     } else {
@@ -185,7 +189,6 @@ async function favoriteChatbot(chatbotId) {
   const method = favoriteChatbots.has(chatbotId) ? 'DELETE' : 'POST';
   const newColor = favoriteChatbots.has(chatbotId) ? notFavoriteColor : favoriteColor;
 
-  // Immediately update the heart icon color on the client side
   favoriteIcon.style.color = newColor;
 
   console.log(`Sending ${method} request to /api/favorites for chatbot ${chatbotId}`);
@@ -200,7 +203,7 @@ async function favoriteChatbot(chatbotId) {
 
   if (response.ok) {
     console.log(`Successfully processed ${method} request for chatbot ${chatbotId}`);
-    // Update the local state to reflect the new favorite status
+    
     if (method === 'DELETE') {
       favoriteChatbots.delete(chatbotId);
     } else {
@@ -208,7 +211,7 @@ async function favoriteChatbot(chatbotId) {
     }
   } else {
     console.log(`Failed to process ${method} request for chatbot ${chatbotId}`);
-    // If the request failed, revert the heart icon color to its previous state
+    
     favoriteIcon.style.color = favoriteChatbots.has(chatbotId) ? favoriteColor : notFavoriteColor;
   }
 }
@@ -216,14 +219,46 @@ async function favoriteChatbot(chatbotId) {
 function applyTagFilter(tag) {
   console.log(`applyTagFilter function called with tag: ${tag}`);
 
+  // Toggle tag in filter
   if (tagFilter.has(tag)) {
-    tagFilter.delete(tag);
+      tagFilter.delete(tag);
   } else {
-    tagFilter.add(tag);
+      tagFilter.add(tag);
   }
-  currentPage = 1; // reset the page to the first page when filter changes
+
+  // Update tag button styles
+  updateTagButtonStyles();
+
+  // Render active tags
+  renderActiveTags();
+
+  currentPage = 1;
   renderChatbots();
 }
+
+function updateTagButtonStyles() {
+  document.querySelectorAll('.tag, .tag-button').forEach(element => {
+      if (tagFilter.has(element.textContent)) {
+          element.classList.add('active-tag');
+      } else {
+          element.classList.remove('active-tag');
+      }
+  });
+}
+
+function renderActiveTags() {
+  const activeTagsContainer = document.querySelector('.container-active-tags');
+  activeTagsContainer.innerHTML = '';
+
+  tagFilter.forEach(tag => {
+      const button = document.createElement('button');
+      button.textContent = tag;
+      button.classList.add('tag-button', 'active-tag');
+      button.onclick = () => applyTagFilter(tag);
+      activeTagsContainer.appendChild(button);
+  });
+}
+
 
 function renderPagination() {
   console.log('renderPagination function called');
@@ -233,7 +268,7 @@ function renderPagination() {
 
   const totalPages = Math.ceil(filteredChatbots.length / itemsPerPage);
 
-  // Only render the pagination buttons if there is more than one page
+  
   if (totalPages > 1) {
     for (let page = 1; page <= totalPages; page++) {
       const button = document.createElement('button');
@@ -283,7 +318,7 @@ function setSearchFilter(newFilter) {
   console.log(`setSearchFilter function called with newFilter: ${newFilter}`);
 
   searchFilter = newFilter;
-  currentPage = 1; // Reset the current page
+  currentPage = 1;
   renderChatbots();
   renderPagination();
 }
@@ -292,7 +327,7 @@ function setFavoritesOnly(newFavoritesOnly) {
   console.log(`setFavoritesOnly function called with newFavoritesOnly: ${newFavoritesOnly}`);
 
   favoritesOnly = newFavoritesOnly;
-  currentPage = 1; // Reset the current page
+  currentPage = 1;
   renderChatbots();
   renderPagination();
 }

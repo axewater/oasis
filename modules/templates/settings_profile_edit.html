@@ -2,7 +2,7 @@
 
 {% block content %}
 {% include "settings_navbar.html" %}
-<div class="container-usercards">
+<div class="container-builder">
         <div class="content-flash">
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -16,9 +16,9 @@
         </div>
 <h2>Edit Profile</h2>
     <div class="profile_avatar">
-        <p>
+        
             <img src="{{ url_for('static', filename=avatarpath) }}" alt="User Avatar">
-        </p>
+        
     </div>
     <div class="profile_avatar_thumb">
         {% set thumbnail_path = avatarpath | replace('.', '_thumbnail.') %}
@@ -29,18 +29,18 @@
             {{ form.hidden_tag() }}
             <p>
                 {{ form.avatar.label }}<br>
-                {{ form.avatar(class="button-filebrowse") }}
+                {{ form.avatar(class="button-glass") }}
             </p>
             <p>
                 {{ form.country.label }}<br>
-                {{ form.country(class="button") }}
+                {{ form.country(class="button-glass") }}
             </p>
             <p>
                 {{ form.about.label }}<br>
-                {{ form.about(class="input-about") }}
+                {{ form.about(class="input-glass") }}
             </p>
     </div>
-    <input class="button" type="submit" value="Save Profile">
+    <input class="button-glass" type="submit" value="Save Profile">
     </form>
 </div>
 {% endblock %}

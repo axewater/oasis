@@ -11,8 +11,8 @@
         {% endfor %}
         </div>
 
-<div class="title-confirm">
-    <h1>Bot configuration</h1>
+<div class="container-builder">
+    <h1>Generated Oasis Chatbot (confirm)</h1>
 
     <h2 class="content">{{ bot_name }}</h2>
     <div>
@@ -25,10 +25,10 @@
 
     <div container-buttons-chatbotconfirm>
         <form action="{{ url_for('main.save_bot') }}" method="post">
-            <button type="submit" class="button">Save</button>
+            <button type="submit" class="button-glass">Save</button>
         </form>
     <form action="{{ url_for('main.delete_avatar', avatar_path=avatar_path) }}" method="post">
-        <button type="submit" class="button">Discard</button>
+        <button type="submit" class="button-glass">Discard</button>
     </form>
 
     </div>

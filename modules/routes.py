@@ -14,9 +14,10 @@ from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from modules import db, mail
-from modules.forms import SettingsForm, ChatbotForm, UserPasswordForm, UserDetailForm, EditProfileForm, NewsletterForm, WhitelistForm, EditUserForm
-from modules.models import User, Whitelist, Chatbot, Blacklist, Message, Favorite, Tag, Highscore
+from modules.forms import SettingsForm, ChatbotForm, UserPasswordForm, UserDetailForm, EditProfileForm, NewsletterForm, WhitelistForm, EditUserForm, UserManagementForm
+from modules.models import User, Whitelist, Chatbot, Blacklist, Message, Favorite, Tag, Highscore, chatbot_tags
 
+from functools import wraps
 from uuid import uuid4
 from tiktoken import get_encoding
 from tiktoken import encoding_for_model
@@ -75,6 +76,18 @@ def favicon():
     full_dir = os.path.join(current_app.static_folder, favidir)
     print(full_dir)
     return send_from_directory(full_dir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            flash("You must be an admin to access this page.", "danger")
+            return redirect(url_for('main.index'))  # Redirect to a different page as appropriate
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @bp.route('/chatbot_browser', methods=['GET'])
 @login_required
@@ -172,6 +185,33 @@ def delete_favorite():
         return jsonify({'message': 'Deleted from favorites'}), 200
     else:
         return jsonify({'message': 'Favorite not found'}), 404
+
+@bp.route('/api/common_tags')
+@login_required
+def common_tags():
+    try:
+        common_tags_query = db.session.query(Tag.tag_name, func.count(chatbot_tags.c.tag_id).label('tag_count')) \
+            .join(chatbot_tags, Tag.id == chatbot_tags.c.tag_id) \
+            .group_by(Tag.tag_name) \
+            .order_by(func.count(chatbot_tags.c.tag_id).desc()) \
+            .limit(8) \
+            .all()
+
+        # Debug: Print the raw query result
+        print("Query Result:", common_tags_query)
+
+        # Process the results
+        tags = [tag[0] for tag in common_tags_query]  # Extracting tag_name from each tuple
+
+        # Debug: Print the processed tags
+        print("Processed Tags:", tags)
+
+        return jsonify(tags)
+    except Exception as e:
+        # Print the exception if any occurs
+        print("An error occurred:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 
 @bp.route('/chatbots/<int:id>', methods=['GET'])
@@ -875,6 +915,7 @@ def admin_main():
 
 @bp.route('/admin_newsletter', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def newsletter():
     print("ADMIN NEWSLETTER: Request method:", request.method)
     form = NewsletterForm()
@@ -897,6 +938,7 @@ def newsletter():
 
 @bp.route('/admin_whitelist', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def whitelist():
     form = WhitelistForm()
     if form.validate_on_submit():
@@ -914,99 +956,106 @@ def whitelist():
     return render_template('admin_whitelist.html', title='Whitelist', whitelist=whitelist, form=form)
 
 
+@bp.route('/get_user/<int:user_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_user(user_id):
+    print(f"Accessing get_user route with user_id: {user_id}")
+    user = User.query.get(user_id)
+    if user:
+        user_data = {
+            'name': user.name,
+            'email': user.email,
+            'role': user.role,
+            'state': user.state,
+            'openai_api_key': user.openai_api_key,
+            'gcloud_api_key': user.gcloud_api_key,
+            'tts_engine': user.tts_engine,
+            'speech_enabled': user.speech_enabled,
+            'quota_messages': user.quota_messages,
+            'count_messages': user.count_messages,
+            'country': user.country,
+            'about': user.about,
+            # Add other fields as needed
+        }
+        return jsonify(user_data)
+    else:
+        print(f"User not found with id: {user_id}")
+        return jsonify({'error': 'User not found'}), 404
+
+
 @bp.route('/admin_usrmgr', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def usermanager():
-    print('ADMIN_USRMGR: Entering usermanager function')
-    form = EditUserForm()
-    users = User.query.all()
-    user_choices = [(user.id, user.name) for user in users]
-    form.name.choices = user_choices
-    print(f'ADMIN_USRMGR: Form name choices are: {form.name.choices}')
+    form = UserManagementForm()
+    users_query = User.query.order_by(User.name).all()
+    form.user_id.choices = [(user.id, user.name) for user in users_query]
 
     if form.validate_on_submit():
-        print("Form is valid")
-        user = User.query.get(form.name.data)
-        if user is not None:
-            print(f"User selected is: {user.name}")
-            # update user attributes with form data
-            user.email = form.email.data
-            user.role = form.role.data
-            user.state = form.state.data
-            user.tts_engine = form.tts_engine.data
-            user.quota_messages = form.quota_messages.data
-            user.avatarpath = form.avatarpath.data
-            user.country = form.country.data
-            user.about = form.about.data
-            # commit changes to database
+        user_id = form.user_id.data
+        action = "Delete" if form.delete.data else "Update"
+
+        print(f"Attempting to {action} user with ID: {user_id}")
+
+        user = User.query.get(user_id)
+        if not user:
+            print(f"User not found with ID: {user_id}")
+            flash(f'User not found with ID: {user_id}', 'danger')
+            return redirect(url_for('main.usermanager'))
+
+        if form.submit.data:
+            # Update user logic
             try:
+                # Update fields
+                user.name = form.name.data or user.name
+                user.email = form.email.data or user.email
+                user.role = form.role.data or user.role
+                user.state = form.state.data if form.state.data is not None else user.state
+                user.openai_api_key = form.openai_api_key.data or user.openai_api_key
+                user.gcloud_api_key = form.gcloud_api_key.data or user.gcloud_api_key
+                user.tts_engine = form.tts_engine.data or user.tts_engine
+                user.speech_enabled = form.speech_enabled.data if form.speech_enabled.data is not None else user.speech_enabled
+                user.quota_messages = form.quota_messages.data if form.quota_messages.data is not None else user.quota_messages
+                user.count_messages = form.count_messages.data if form.count_messages.data is not None else user.count_messages
+                user.country = form.country.data or user.country
+                user.about = form.about.data or user.about
+
                 db.session.commit()
-                print("Changes saved to database")
-                flash('Changes saved.')
-                return redirect(url_for('admin_usrmgr'))
+                print(f"User updated: {user}")
+                flash('User updated successfully!', 'success')
+
+                # Set the form's user_id field to the just edited user
+                form.user_id.data = user_id
             except Exception as e:
-                print(f"Error saving changes to database: {e}")
-                flash(f"Error saving changes to database: {e}")
-                return redirect(url_for('admin_usrmgr'))
-        else:
-            print("No user selected")
-            flash("No user selected")
-            return redirect(url_for('admin_usrmgr'))
+                db.session.rollback()
+                print(f"Database error on update: {e}")
+                flash('Database error. Update failed.', 'danger')
 
-    if request.method == 'GET':
-        print("Request method is GET")
-        user = User.query.get(form.name.data)
-        if user is not None:
-            print(f"User selected is: {user.name}")
-            # populate editable fields with user data
-            form.email.data = user.email
-            form.role.data = user.role
-            form.state.data = user.state
-            form.tts_engine.data = user.tts_engine
-            form.quota_messages.data = user.quota_messages
-            form.avatarpath.data = user.avatarpath
-            form.country.data = user.country
-            form.about.data = user.about
-            # populate non editable fields with user data
-            password_hash = user.password_hash
-            openai_api_key = user.openai_api_key
-            gcloud_api_key = user.gcloud_api_key
-            speech_enabled = user.speech_enabled
-            created = user.created
-            lastlogin = user.lastlogin
-            count_messages = user.count_messages
-            fav_tags = user.fav_tags
-            fav_bots = user.fav_bots
-            user_id = user.user_id
+        elif form.delete.data:
+            # Delete user logic
+            user = User.query.get(form.user_id.data)
+            if not user:
+                print(f"User not found with ID: {form.user_id.data}")
+                flash('User not found.', 'danger')
+                return redirect(url_for('main.usermanager'))
 
-        else:
-            print("No user selected")
-            # set defaults or empty values if no user is selected
-            form.email.data = ""
-            form.role.data = ""
-            form.state.data = ""
-            form.tts_engine.data = ""
-            form.quota_messages.data = 0
-            form.avatarpath.data = ""
-            form.country.data = ""
-            form.about.data = ""
-            password_hash = ""
-            openai_api_key = ""
-            gcloud_api_key = ""
-            speech_enabled = ""
-            created = ""
-            lastlogin = ""
-            count_messages = 0
-            fav_tags = ""
-            fav_bots = ""
-            user_id = ""
+            try:
+                db.session.delete(user)
+                db.session.commit()
+                print(f"User deleted: {user}")
+                flash('User deleted successfully!', 'success')
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                error_msg = f"Database error on delete: {e}"
+                print(error_msg)
+                flash(error_msg, 'danger')
 
-        print(user)
-        print(created)
-        return render_template('admin_usrmgr.html', title='User Manager', form=form, password_hash=password_hash,
-                               openai_api_key=openai_api_key, gcloud_api_key=gcloud_api_key,
-                               speech_enabled=speech_enabled, created=created, lastlogin=lastlogin,
-                               count_messages=count_messages, fav_tags=fav_tags, fav_bots=fav_bots, user_id=user_id)
+    else:
+        form.user_id.data = 3
+
+    return render_template('admin_usrmgr.html', form=form, users=users_query)
+
 
 def _authenticate_and_redirect(username, password):
     user = User.query.filter(func.lower(User.name) == func.lower(username)).first()

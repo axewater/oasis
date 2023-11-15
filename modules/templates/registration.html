@@ -3,13 +3,13 @@
 <html>
 <head>
     <title>Registration</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/newstyles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container-base">
 
-                <div class="container-settings">
-                    <div class="speech-bubble ai">Register for your free trial account at Persona now !</div>
+                <div class="container-builder">
+                    <div class="speech-bubble">Register for your free trial account at the Oasis today!</div>
 
                     {% with messages = get_flashed_messages() %}
                     {% if messages %}
@@ -25,17 +25,17 @@
                         {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.username.label }}
-                            {{ form.username(class_="username-input") }}
+                            {{ form.username(class_="input-glass") }}
                         </div>
                         <div class="form-group">
                             {{ form.email.label }}
-                            {{ form.email(class_="email-input") }}
+                            {{ form.email(class_="input-glass") }}
                         </div>
                         <div class="form-group">
                             {{ form.password.label }}
-                            {{ form.password(class_="password-input") }}
+                            {{ form.password(class_="input-glass") }}
                         </div>
-                        <input type="submit" value="Register" class="button">
+                        <input type="submit" value="Register" class="button-glass">
                     </form>
                 </div>
         </div>

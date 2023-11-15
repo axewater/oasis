@@ -25,7 +25,8 @@ body {
 
 .button-pagination-glass {
 
-    padding: 5px 10px;
+    width: 6%;
+    gap: 2px;
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -42,6 +43,16 @@ body {
 
 }
 
+.button-pagination-glass:hover {
+
+    transform: translateY(-3px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.button-pagination-glass active {
+    background-color: #000;
+    color: green;
+}
 
 .button-glass {
     padding: 10px 15px;
@@ -68,12 +79,12 @@ body {
 }
 
 .button-glass.button-delete:hover {
-    background-color: rgba(255, 0, 0, 0.1); /* Red background on hover for delete */
+    background-color: rgba(255, 0, 0, 0.1);
 }
 
 .button-glass-delete:hover {
     color: white;
-    background-color: #ff6961; /* Soft red */
+    background-color: #ff6961;
 }
 
 .button-glass-chat,
@@ -110,7 +121,7 @@ body {
     margin: 5px;
     padding: 5px;
     backdrop-filter: blur(5px);
-    background: rgba(0, 0, 0, 0.6);
+    
     border-radius: 10px;
     display: flex;
     flex-grow: 1;
@@ -124,9 +135,20 @@ body {
     flex-direction: column;    
 }
 
-.checkbox-glass {
-
+.container-builder {
+    display: flex;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    flex-direction: column;
     color: white;
+    margin: 20px; 
+
+}
+
+.checkbox-glass {
+    
+    color: white;
+
 }
 
 
@@ -137,13 +159,52 @@ body {
     
 }
 
+.form-group {
+
+ margin: 10px;
+}
+
+.role-container {
+    display: flex;
+    justify-content: space-between;
+    }
+
+    .role-box {
+        width: 45%;
+        height: 75px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 8px solid transparent;
+        border-color: grey;
+        margin-top: 10px;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .role-box.highlight {
+        border-color: gold;
+    }
+
+
+
+.container-tagbuttons {
+    display: flex;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+
 .chatroom-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    color: white; /* Ensure text is readable */
-    font-size: 1.2rem; /* Adjust font size as needed */
+    color: white; 
+    font-size: 1.2rem;
 }
 
 .chatroom-link {
@@ -162,18 +223,28 @@ body {
 
 .chatroom-container-input {
     margin-top: 20px;
+
 }
 
 .input-glass {
-    width: 100%;
+    width: 95%;
     background: rgba(255, 255, 255, 0.05);
     border: none;
     padding: 10px;
     border-radius: 8px;
     color: white;
+    margin: 5px;
 }
 
+.input-glass-checkbox {
 
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    margin: 15px;
+}
 
 /* Speech Bubble Styling */
 .speech-bubble {
@@ -197,6 +268,7 @@ body {
 .speech-bubble.ai {
     background: rgba(144, 238, 144, 0.4); /* Semi-transparent background for AI */
     align-self: flex-start;
+
 }
 
 /* Avatar Styling */
@@ -207,57 +279,91 @@ body {
     border-radius: 50%;
 }
 
-/* Text inside the speech bubble for better readability */
+
 .formatted-message {
-    color: #000; /* Black color for better contrast and readability */
+    color: #000;
     padding: 5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
-/* Additional Styles */
+
 .chatroom-messages-glass {
     display: flex;
     flex-direction: column;
 }
 
-/* User and AI Message Containers */
+
 .user, .ai {
-    display: flex;
-    flex-direction: row;
+
 }
 
-.container-chat-avatar-user, .container-chat-avatar-ai {
-    
-}
 
-/* Ensuring overflow text is managed properly */
-.formatted-message {
-    word-break: break-word; /* Ensures text breaks to prevent overflow */
-}
 
-/* Modify this as per your requirement */
+
 .codeblockz {
-    background: rgba(255, 255, 255, 0.8); /* Semi-transparent background for code blocks */
+    background: rgba(255, 255, 255, 0.8); 
     padding: 10px;
     border-radius: 8px;
     margin: 5px 0;
+    max-width: 75%;
 }
 
-/* Adjusting the chatroom messages container */
+
+.formatted-code * {
+    background: white;
+}
+
+.title-codeblock {
+    background-color: #263339;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 5px;
+    padding: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+
+.copy-code-button {
+
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border: 1px solid black;
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+    background: rgb(175, 174, 174, 0.4);
+    transition: transform 0.3s;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-code-button:hover {
+    background-color:rgb(101, 183, 101);
+}
+
+
+
 .chatroom-messages-glass {
     padding: 20px;
-    overflow-y: scroll; /* Enables scrolling for overflow content */
+    overflow-y: scroll;
 }
 
-/* Tail for speech bubbles to indicate who's speaking */
+
 .speech-bubble.ai::after {
     content: "";
     position: absolute;
     top: 50%;
-    left: -10px; /* Adjust this as needed */
+    left: -10px;
     width: 0;
     height: 0;
     border: 10px solid transparent;
-    border-right-color: rgba(144, 238, 144, 0.5); /* Match AI bubble color */
+    border-right-color: rgba(144, 238, 144, 0.5);
     border-left: 0;
     margin-top: -10px;
     transform: translate(0, -50%);
@@ -267,26 +373,31 @@ body {
     content: "";
     position: absolute;
     top: 50%;
-    right: -10px; /* Adjust this as needed */
+    right: -10px; 
     width: 0;
     height: 0;
     border: 10px solid transparent;
-    border-left-color: rgba(100, 149, 237, 0.5); /* Match user bubble color */
+    border-left-color: rgba(100, 149, 237, 0.5); 
     border-right: 0;
     margin-top: -10px;
     transform: translate(0, -50%);
 }
 
-.chatbot-card {
-    border: 2px solid black;
-    border-radius: 10px;
-    padding: 25px;
-    margin: 22px;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
-    width: 250px;
-  }
+.password-input {
+
+    display: block;
+    padding: 10px;
+    height: 10px;
+    width: 80%;
+    background-color: white;
+    box-shadow: inset 1px 3px 5px rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+
+}
 
 .glass-panel {
+    display: flex;
+    flex-direction: column;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 15px;
@@ -300,17 +411,61 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.chatbot-avatar-container {
+.glass-panel-text {
 
-
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.chatbot-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 2px solid black;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 2px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+    width: 250px;
+  }
+
+  .chatbot-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  .profile_avatar img {
+
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 10px;
+
+
+  }
 
 .chatbot-avatar {
-  width: 150px; 
-  height: 150px;
+  width: 220px; 
+  height: 220px;
   border-radius: 5%;
-  align-content: center;
+  border: 1px solid rgb(0, 0, 0);
 }
+
+
 
 .chatbot-details {
     flex: 1;
@@ -324,16 +479,82 @@ body {
 }
 
 .chatbot-name {
+    display: flex;
+    justify-content: center; /* Center horizontally */
     color: white;
-    font-size: 1.5rem; /* Adjust font size as needed */
-    margin-bottom: 10px;
+    font-size: 1.4rem; 
+    margin: 0px;
 }
+
+.chatbot-voting {
+    
+    justify-content: center; /* Center horizontally */
+    color: white;
+    font-size: 1.4rem; 
+
+}
+
+
+.container-active-tags {
+
+    color: white;
+
+}
+
+.active-tag {
+
+    color: rgb(53, 221, 53);
+    padding: 10px 15px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 5px; 
+}
+
+
 
 .chatbot-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
     margin-bottom: 5px;
+    color: rgb(177, 177, 218);
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.tag {
+    padding: 0px 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 5px;
+    color: rgba(255, 255, 255, 0.85); 
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    background: rgba(255, 255, 255, 0.1); 
+    backdrop-filter: blur(5px); 
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.tag:hover {
+
+    color: white;
+    background-color: #000;
+}
+
+
+.chatbot-tags.clicked {
+    background-color: darkblue; 
+    color: white;
 }
 
 .chatbot-actions {
@@ -348,31 +569,83 @@ body {
     align-items: center;
 }
 
+.favorite-container {
+    font-size: 2.2rem;
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
 
+.favorites-only-input {
+
+    font-size: 2.2rem;
+    margin-left: 8px;
+}
 
 .favorite-icon {
-    color: pink; /* Adjust color as needed */
-    font-size: 1.5rem; /* Adjust size as needed */
+    color: pink;
     cursor: pointer;
     transition: color 0.3s ease;
+    display: block;
+    margin: 0 auto;
+    
 }
 
 .favorite-icon:hover {
-    color: #ffcccb; /* Light red on hover for heart */
+    
+    font-size: 2.5rem; 
+    color: #ffcccb; 
 }
 
 
 .vote-button {
     background: transparent;
     border: none;
-    color: white;
+    
     font-size: 1rem;
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+
+.vote-button.red {
+    background-color: darkred; 
+}
+
+.vote-button:hover {
+    transform: scale(1.1); 
+}
+
+.vote-button:disabled {
+    color: grey; /* color when disabled */
+    cursor: not-allowed;
+}
+
+.vote-button:hover:not(:disabled) {
+    transform: scale(1.1);
 }
 
 .rating-value {
     color: white;
     font-size: 1rem;
     margin: 5px 0;
+}
+
+
+.spinner {
+    border: 8px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 8px solid #333;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    display: none;  /* initially hidden */
+    margin: auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 

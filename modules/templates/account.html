@@ -3,26 +3,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-content">
+<div class="container-browser">
   <div>
     <br>
     <h2>Account Details</h2>
     <form id="user-detail-form" method="POST">
       <div>
         <label for="username">Username:</label>
-        <input class="username-input" type="text" id="username" name="username" value="{{ user.username }}" required>
+        <input class="input-glass" type="text" id="username" name="username" value="{{ user.username }}" required>
         <div id="username-check-result"></div>
       </div>
       <label for="password">Password:</label>
-      <input class="password-input" type="password" id="password" name="password" required>
+      <input class="input-glass" type="password" id="password" name="password" required>
       <p>Created: {{ user.created.strftime('%Y-%m-%d') }}</p>
       <p>Subscription: {{ user.role }}</p>
       <p>Message Quota: {{ user.quota_messages }}</p>
       <p>Messages usage: {{ user.count_messages }}</p>
       <p>Favorite tags: {{ user.fav_tags|join(", ") }}</p>
       <p>Favorite bots: {{ user.fav_bots|join(", ") }}</p>
-      <input type="submit" class="button" value="Save">
-      <button class="button" onclick="location.reload()">Cancel</button>
+      <input type="submit" class="button-glass" value="Save">
+      <button class="button-glass" onclick="location.reload()">Cancel</button>
     </form>
   </div>
 </div>

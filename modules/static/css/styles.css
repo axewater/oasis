@@ -854,11 +854,9 @@ style>
 
         border: none;
         color: white;
-        text-align: center;
         text-decoration: none;
-        display: inline-block;
         font-size: 12px;
-        margin: 2px 22px;
+
         cursor: pointer;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         border: 1px solid black;

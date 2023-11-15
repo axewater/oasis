@@ -17,11 +17,18 @@
     <div class="container-browser">
         <div class="container-filters">
             <input type="text" id="search-input" class="input-glass" oninput="setSearchFilter(this.value)" placeholder="Search Chatbots" />
-            <label class="checkbox-glass">
-                Favs
-                <input type="checkbox" class="favorites-only-input" id="favorites-only-input" onchange="setFavoritesOnly(this.checked)" />
-            </label>
-            
+            <div class="container-active-tags">
+                <a>Tags</a>
+            </div>
+
+            <div class="container-tagbuttons">  
+            </div>
+            <div class="container-showfavs">  
+                <label class="checkbox-glass">
+                    Show favorites
+                    <input type="checkbox" class="favorites-only-input" id="favorites-only-input" onchange="setFavoritesOnly(this.checked)" />
+                </label>
+            </div>
             <div class="container-pagination" id="pagination">
                 <!-- Pagination will be inserted here -->
             </div>

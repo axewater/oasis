@@ -5,7 +5,7 @@
 {% block content %}
 {% include "settings_navbar.html" %}
 
-<div class="container-settings-account">
+<div class="container-builder">
         <div class="content-flash">
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -17,7 +17,7 @@
             {% endif %}
             {% endwith %}
         </div>
-    <br>
+    <div class="glass-panel-text">
     <h2>My Account</h2>
     <br>
     <form id="user-detail-form" method="POST">
@@ -31,7 +31,7 @@
     <p>
         <br>
         <label class="label" for="tts_engine">TTS Engine</label><br>
-        <select id="tts_engine" name="tts_engine" class="input-tts">
+        <select id="tts_engine" name="tts_engine" class="input-glass">
             <option value="">Select an option</option>
             <option value="webspeech" {{ 'selected' if user.tts_engine == 'webspeech' else '' }}>Webspeech (local/free)</option>
             <option value="gcloud" {{ 'selected' if user.tts_engine == 'gcloud' else '' }}>Google Cloud (paid) $</option>
@@ -52,8 +52,8 @@
 
 
 
-    <input type="submit" class="button" value="Save">
-    <button class="button" onclick="location.reload()">Cancel</button>
+    <input type="submit" class="button-glass" value="Save">
+    <button class="button-glass" onclick="location.reload()">Cancel</button>
     </form>
 </div>
 

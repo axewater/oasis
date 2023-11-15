@@ -3,66 +3,82 @@
 {% block content %}
 
 {% include "admin_navbar.html" %}
-<div class="container-admin-usrmgr">
-    <h1>User Manager</h1><br>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <ul class=flashes>
+<div class="glass-panel-text">
+    <div class="flashes">
         {% for message in messages %}
-    <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-
-    <form method="POST">
-        <p>
-    <label for="user-search">Search User:</label><br>
-    <input type="text" id="user-search" name="user-search">
-</p>
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+    </div>
+    <form method="POST" action="">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.name.label }}<br>
-            {{ form.name() }}
-        </p>
-        <p>
-            {{ form.email.label }}<br>
-            {{ form.email() }}
-        </p>
-        <p>
-            {{ form.role.label }}<br>
-            {{ form.role() }}
-        </p>
-        <p>
-            {{ form.state.label }}<br>
-            {{ form.state() }}
-        </p>
-        <p>
-            {{ form.tts_engine.label }}<br>
-            {{ form.tts_engine() }}
-        </p>
-        <p>
-            {{ form.quota_messages.label }}<br>
-            {{ form.quota_messages() }}
-        </p>
-        <p>
-            {{ form.avatarpath.label }}<br>
-            {{ form.avatarpath() }}<br>
-            <img src="{{ url_for('static', filename=form.avatarpath.data) }}" alt="User Avatar">
-        </p>
-        <p>
-            {{ form.country.label }}<br>
-            {{ form.country() }}
-        </p>
-        <p>
-            {{ form.about.label }}<br>
-            {{ form.about() }}
-        </p>
-        <p>
-            {{ form.submit() }}
-        </p>
+        <div>
+            {{ form.user_id.label }} {{ form.user_id(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.state.label }} {{ form.state(class="input-checkbox") }}
+        </div>
+        <div>
+            {{ form.speech_enabled.label }} {{ form.speech_enabled(class="input-glass-checkbox") }}
+        </div>
+        <div>
+            {{ form.name.label }} {{ form.name(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.email.label }} {{ form.email(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.role.label }} {{ form.role(class="input-glass") }}
+        </div>
+
+        <div>
+            {{ form.openai_api_key.label }} {{ form.openai_api_key(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.gcloud_api_key.label }} {{ form.gcloud_api_key(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.tts_engine.label }} {{ form.tts_engine(class="input-glass") }}
+        </div>
+
+        <div>
+            {{ form.quota_messages.label }} {{ form.quota_messages(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.count_messages.label }} {{ form.count_messages(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.country.label }} {{ form.country(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.about.label }} {{ form.about(class="button-glass") }}
+        </div>
+        <div>
+            {{ form.submit(class="button-glass") }} {{ form.delete(class="button-glass") }}
+        </div>
     </form>
 
+    <!-- List of users -->
+    {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <!-- Add other headers for user fields -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <!-- Add other user details here -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %} 
+    </div>
 
-</div>
+<script src="{{ url_for('static', filename='js/usrmgr.js') }}"></script>
 {% endblock %}

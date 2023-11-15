@@ -7,24 +7,25 @@
         {% endfor %}
         </div>
 
-<div class="container-chatbot-edit">
+<div class="container-builder">
     <form method="POST" enctype="multipart/form-data">
         <h1>
             Chatbot editor
         </h1>
         <div class="profile_avatar">
-        <img src="{{ url_for('static', filename=chatbot.avatarpath) }}" alt="{{ chatbot.name }}" class="img-fluid">
+            {{ form.avatarpath.label }} {{ form.avatarpath(class="button-glass") }}<br><br>
+            <img src="{{ url_for('static', filename=chatbot.avatarpath) }}" alt="{{ chatbot.name }}" class="img-fluid">
         </div>
         {{ form.hidden_tag() }}
-        {{ form.avatarpath.label }} {{ form.avatarpath(class="button-filebrowse") }}<br><br>
-        {{ form.name.label }} {{ form.name(class="input-generate") }}<br>
-        {{ form.systemprompt.label }} {{ form.systemprompt(class="input-system-prompt") }}<br>
-        {{ form.voicetype.label }} {{ form.voicetype(class="button") }}<br>
-        {{ form.llm_model.label }} {{ form.llm_model(class="button") }}<br>
-        <div class="container-tags">
-        {{form.tags.label}}{{form.tags(class="input-generate")}}<br>
+
+        {{ form.name.label }} {{ form.name(class="input-glass") }}<br>
+        {{ form.systemprompt.label }} {{ form.systemprompt(class="input-glass") }}<br>
+        {{ form.voicetype.label }} {{ form.voicetype(class="button-glass") }}<br>
+        {{ form.llm_model.label }} {{ form.llm_model(class="button-glass") }}<br>
+        <div class="input-glass">
+        {{form.tags.label}}{{form.tags(class="input-glass")}}<br>
         </div>
-        {{ form.submit(class="button") }}
+        {{ form.submit(class="button-glass") }}
     </form>
     {% endblock %}
 </div>

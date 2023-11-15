@@ -2,7 +2,7 @@
 
 {% block content %}
 {% include "admin_navbar.html" %}
-<div class="container-admin-newsletter">
+<div class="container-builder">
     <h1>Newsletter</h1>
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -18,11 +18,11 @@
         {{ form.hidden_tag() }}
         <p>
             {{ form.subject.label }}<br>
-            {{ form.subject(size=32, class="input-generate") }}<br>
+            {{ form.subject(size=32, class="input-glass") }}<br>
         </p>
         <p>
             {{ form.content.label }}<br>
-            {{ form.content(rows=10, cols=32, class="input-about") }}<br>
+            {{ form.content(rows=10, cols=32, class="input-glass") }}<br>
         </p>
         <p>
             <input type="checkbox" id="selectAll"> Select All/Select None<br><br>
@@ -32,7 +32,7 @@
         {% endfor %}
         {{ form.recipients(style="display:none") }}  <!-- hidden input field -->
 
-        <p>{{ form.send(class="button") }}</p>
+        <p>{{ form.send(class="button-glass") }}</p>
     </form>
     <script>
         document.getElementById("selectAll").addEventListener("click", function(e) {

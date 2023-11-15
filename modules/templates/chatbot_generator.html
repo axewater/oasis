@@ -3,14 +3,14 @@
 {% block content %}
 
 
-<div class="container-generator">
+<div class="container-builder">
     Welcome to the world famous,
     <br>
     <b>World Famous Person Generator.</b>
     <br>
-    It can create any chatbot for you, based on the name you give it. Remember to save your Persona if you like it!<br>
+    It can create any chatbot for you, based on the name you give it. Remember to save your Oasis Persona if you like it!<br>
         <br>
-    Please do not click 'Play God' multiple times, it may cause a rift in the time space continuum. Be patient<br>
+    Please do not click multiple times, it may cause a rift in the time space continuum. Be patient<br>
     <br>
     <b>Enter the name of a famous person</b>
 
@@ -28,15 +28,15 @@
     <!-- Save Bot Form -->
     <form action="{{ url_for('main.create_bot') }}" method="post">
         <div class="generate-form">
-        <input type="text" class="input-generate" name="bot_name" placeholder="Type the name here" required>
+        <input type="text" class="input-glass" name="bot_name" placeholder="Type the name here" required>
         </div>
         <div class="generate-form">
-        <button type="submit" class="button" >Create Chatbot Persona</button>
+        <button type="submit" class="button-glass" >Create Oasis Chatbot</button>
         </div>
     </form>
     <!-- Image cycling -->
     <div class="image-gen">
-        <img src="{{ url_for('static', filename='generator/gen' ~ random_num ~ '.png') }}" style="max-width: 100%; height: auto;">
+        <img src="{{ url_for('static', filename='generator/gen' ~ random_num ~ '.png') }}" style="max-width: 90%; height: auto;  border-radius: 8px; margin-top: 8px;">
     </div>
 </div>
 

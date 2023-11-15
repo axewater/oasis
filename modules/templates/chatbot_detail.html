@@ -9,22 +9,24 @@
         </div>
 
 
-<div class="container-chatbot-edit">
+<div class="container-builder">
+    <div class="container-chatbotdetails">
 
         <h1>{{ chatbot.name }} <i class="fa fa-heart favorite-icon" style="color: {{ 'rgba(255, 105, 97, 1)' if is_favorite else 'rgba(0, 0, 0, 0.5)' }}" onclick="favoriteChatbot(this)" data-chatbot-id="{{ chatbot.id }}"></i>
         </h1>
        <div class="profile_avatar">
             <img src="{{ url_for('static', filename=chatbot.avatarpath) }}" alt="{{ chatbot.name }}" class="img-fluid">
-            <p>(Language Model: {{ chatbot.llm_model }})</p>
-        </div>
-        <button type="button" class="button" onclick="location.href='/chatroom/{{ chatbot.id }}'">Chat</button>
+            
+    </div>
+        <button type="button" class="button-glass" onclick="location.href='/chatroom/{{ chatbot.id }}'">Chat</button>
         {% if current_user.role == 'admin' %}
-            <button type="button" class="button" onclick="location.href='/chatbots/edit/{{ chatbot.id }}'">Edit</button>
+            <button type="button" class="button-glass" onclick="location.href='/chatbots/edit/{{ chatbot.id }}'">Edit</button>
         {% endif %}
-        <button type="button" class="button" onclick="location.href='/chatbot_browser'">Back</button>
+        <button type="button" class="button-glass" onclick="location.href='/chatbot_browser'">Back</button>
 
-    <div class="chatbotcards-prompt-container">
+    <div class="glass-panel">
         <p>{{ chatbot.systemprompt }}</p>
+        <p>(Language Model: {{ chatbot.llm_model }})</p>
     </div>
 </div>
 

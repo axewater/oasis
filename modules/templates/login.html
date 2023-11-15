@@ -1,10 +1,10 @@
 {% extends 'homepage.html' %}
 
 {% block content %}
-<div class="content">
+<div class="container-base">
     <div class="ai">
         {% if current_user.is_authenticated %}
-        <div class="container-generator">Welcome back, {{ current_user.name }}!</div>
+        <div class="container-builder">Welcome back, {{ current_user.name }}!</div>
         {% else %}
         <h1></h1>
         {% with messages = get_flashed_messages() %}
@@ -17,23 +17,25 @@
             {% endif %}
             {% endwith %}
 
-            <div class="container-home">
-                <div class="container-generator">
-                    <h1 class="logo">Persona Super Chat</h1>
-                    Ever wanted to talk to a celebrity or historical figure like Elon Musk, Mahatma Ghandi or Leonardo Davinci ? Now is your chance to talk to the legends, or create your own Chatbot personalities.
+            <div class="container-base">
+                <div class="container-builder">
+                    <h1 class="logo">Oasis</h1>
+                    Ever wanted to talk to a celebrities or historical figures such as Elon Musk, Mahatma Ghandi or Leonardo Da Vinci?
+                    <br>
+                    Now is your chance to talk to the legends, or create your own Chatbot personalities.
                     <br>
                     Register for your free trial account now, or login if you already have one.
                 </div>
             </div>
-            <div class="container-login">
+            <div class="container-builder">
                 <form action="/login" method="post">
                     <label for="username">Username:</label><br>
-                    <input type="text" class="username-input" id="username" name="username"><br>
+                    <input type="text" class="input-glass" id="username" name="username"><br>
                     <label for="password">Password:</label><br>
-                    <input type="password" class="password-input" id="password" name="password"><br>
-                    <div class="button-container">
-                        <input type="submit" value="LOGIN" class="button-login">
-                        <a href="/register" class="button-register">REGISTER</a>
+                    <input type="password" class="input-glass" id="password" name="password"><br>
+                    <div class="container-base">
+                        <input type="submit" value="LOGIN" class="button-glass">
+                        <a href="/register" class="button-glass">REGISTER</a>
                     </div>
                 </form>
             </div>

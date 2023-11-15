@@ -24,7 +24,7 @@
             <button class="button-glass"><i class="fas fa-hammer"></i> <a href="/bot_generator">Build</a></button>
             <button class="button-glass"><i class="fas fa-gamepad"></i> <a href="/games/game_selection">Games</a></button>
             <button class="button-glass"><i class="fas fa-user-circle"></i> <a href="/settings_account">Account</a></button>
-            <button class="button-glass"><i class="fas fa-sign-out-alt"></i> <a href="/logout">Logout</a></button>
+            
             {% if current_user.role == 'admin' %}
                 <button class="button-glass"><i class="fas fa-user-shield"></i> <a href="/admin_main">Admin</a></button>
             {% endif %}
@@ -33,6 +33,7 @@
             <button class="button-glass"><i class="fas fa-user-plus"></i> <a href="/register">Register</a></button>
         {% endif %}
         <button class="button-glass"><i class="fas fa-question-circle"></i> <a href="/help">Help</a></button>
+        <button class="button-glass"><i class="fas fa-sign-out-alt"></i> <a href="/logout">Logout</a></button>
     </nav>
 
         {% block content %}{% endblock %}

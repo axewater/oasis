@@ -96,7 +96,7 @@ function add_message_to_chat(type, message) {
             var code = lines.join('\n');
 
             // Return the modified HTML including the language name and 'copy code' button
-            return `<div class="codeblockz"><div class="title-codeblock">Language: ${language}<button class="copy-code-button">Copy Code</button></div><div class="formatted-code"><pre><code class="language-python">${code}</code></pre></div></div>`;
+            return `<div class="codeblockz"><div class="title-codeblock">Language: ${language}<button class="copy-code-button">Copy</button></div><div class="formatted-code"><pre><code class="language-python">${code}</code></pre></div></div>`;
         });
     }
 
@@ -148,7 +148,7 @@ $('body').on('click', '.copy-code-button', function() {
 
     // Give a visual feedback (Change the button text temporarily)
     var originalText = $(this).text();
-    $(this).text('Copied!');
+    $(this).text('Copied');
     var button = $(this);
     setTimeout(function() {
         button.text(originalText);

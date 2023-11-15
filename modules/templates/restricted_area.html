@@ -4,15 +4,15 @@
 
 
 
-<div class="container-home">
+<div class="container-base">
 
         {% if current_user.is_authenticated %}
-    <div class="container-generator">
-        <h1 class="logo">Persona Super Chat</h1>
+    <div class="container-builder">
+        <h1 class="logo">Oasis</h1>
         <br>
         Welcome back, {{ current_user.name }}!<br>
         <br>
-        Welcome to Persona, your gateway to captivating conversations with famous personas from throughout history! Immerse yourself in our vast library of chatbots, each designed to simulate the wit, wisdom, and charm of renowned figures. Whether you want to discuss philosophy with Socrates, share a laugh with Charlie Chaplin, or seek advice from Maya Angelou, our chatbots bring these iconic personalities to life.
+        Welcome to the Oasis, your gateway to captivating conversations with famous personas from throughout history! Immerse yourself in our vast library of chatbots, each designed to simulate the wit, wisdom, and charm of renowned figures. Whether you want to discuss philosophy with Socrates, share a laugh with Charlie Chaplin, or seek advice from Maya Angelou, our chatbots bring these iconic personalities to life.
         <br>
         <br>
         Creating your own bot is as easy as typing the name of a celebrity or historical figure. Our AI instantly generates a fitting image, making the experience even more immersive. You can favorite, rate, and tag bots based on their performance and unique traits. Explore our comprehensive bot database, filtered by popularity, ratings, and tags, to discover the most intriguing personas.
@@ -22,7 +22,7 @@
     </div>
     {% else %}
     <div class="speech-bubble ai">
-        Welcome to IlonaChat<br>
+        Welcome to the Oasis!<br>
         Please login or register.
     </div>
 
@@ -37,14 +37,18 @@
         </div>
     {% endif %}
     {% endwith %}
-    <form action="/login" method="post">
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username"><br>
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password"><br>
-        <input type="submit" value="Login">
-    </form>
-    <a href="/register">Register</a>
+    <div class="container-login">
+        <form action="/login" method="post">
+            <label for="username">Username:</label><br>
+            <input type="text" class="input-glass" id="username" name="username"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" class="input-glass" id="password" name="password"><br>
+            <div class="button-container">
+                <input type="submit" value="LOGIN" class="button-glass">
+                <a href="/register" class="button-glass">REGISTER</a>
+            </div>
+        </form>
+    </div>
     {% endif %}
 </div>
 
