@@ -2,3 +2,7 @@ config.py
 .env
 app.db
 instance/app.db
+*.pyc
+__pycache__/
+venv/*
+/venv

@@ -25,6 +25,13 @@
         <div class="input-glass">
         {{form.tags.label}}{{form.tags(class="input-glass")}}<br>
         </div>
+        <div class="form-group">
+            <label for="premium">Premium Status</label>
+            <select class="form-control" id="premium" name="premium">
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+            </select>
+        </div>
         {{ form.submit(class="button-glass") }}
     </form>
     {% endblock %}

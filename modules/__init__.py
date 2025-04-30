@@ -4,15 +4,16 @@ from flask_mail import Mail, Message as MailMessage
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from flask import Flask, Markup
+from flask import Flask
+from markupsafe import Markup
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import Config
 import re
+from flask_migrate import Migrate
+from flask_socketio import SocketIO
 
-
-
-
+socketio = SocketIO(cors_allowed_origins="https://oasis.pleasewaitloading.com")
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
@@ -21,9 +22,12 @@ def create_app():
     global s
     app = Flask(__name__)
     app.config.from_object(Config)
+    
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/avatars_users')
     app.config['UPLOAD_FOLDER_CHATBOTS'] = os.path.join(app.root_path, 'static/avatars')
     app.jinja_env.filters['nl2br'] = nl2br
+    socketio.init_app(app)
+    migrate = Migrate(app, db) 
 
     db.init_app(app)
     login_manager.init_app(app)

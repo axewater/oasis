@@ -12,7 +12,6 @@ let notFavoriteColor = 'rgba(0, 0, 0, 5)';
 
 
 window.onload = async function () {
-  console.log('Window onload function called');
 
   const roleResponse = await fetch('/api/current_user_role');
   const roleData = await roleResponse.json();
@@ -21,12 +20,12 @@ window.onload = async function () {
 
   const response = await fetch('/api/chatbots');
   chatbots = await response.json();
-  console.log('Chatbots:', chatbots);
+  // console.log('Chatbots:', chatbots);
 
   const favoritesResponse = await fetch('/api/favorites');
   const favorites = await favoritesResponse.json();
   favoriteChatbots = new Set(favorites);
-  console.log('Favorites:', favorites);
+  // console.log('Favorites:', favorites);
 
   const tagsResponse = await fetch('/api/common_tags');
   const commonTags = await tagsResponse.json();
@@ -49,7 +48,7 @@ function renderTagButtons(tags) {
 
 
 function renderChatbots() {
-    console.log("renderChatbots function called");
+    // console.log("renderChatbots function called");
 
     const votedChatbots = JSON.parse(localStorage.getItem("votedChatbots")) || [];
 
@@ -78,6 +77,7 @@ function renderChatbots() {
   chatbotGrid.innerHTML = '';
 
   chatbotsToShow.forEach((chatbot) => {
+    let premiumBannerMarkup = chatbot.premium === 'premium' ? '<img src="/static/images/premium.png" class="premium-banner" alt="Premium Chatbot" />' : '';
     let favoriteColorIndicator = favoriteChatbots.has(chatbot.id) ? favoriteColor : notFavoriteColor;
     let deleteButton = '';
     let editButton = '';
@@ -93,36 +93,37 @@ function renderChatbots() {
 
     const chatbotCard = `
     <div class="chatbot-card" data-id="${chatbot.id}">
-  
-    <h3 class="chatbot-name">${chatbot.name}</h3>
-    <div class="chatbot-details">
-      <div class="chatbot-avatar-container">
-        <img class="chatbot-avatar" src="/static/${chatbot.avatarpath}" alt="${chatbot.name}" />
-        <div class="favorite-container">
-        <i class="fa fa-heart favorite-icon" onclick="favoriteChatbot(${chatbot.id})" style="color:${favoriteColorIndicator};"></i>
-      </div>
-      </div>
+      <h3 class="chatbot-name">${chatbot.name}</h3>
+      <div class="chatbot-details">
+        <div class="chatbot-avatar-container">
+          ${premiumBannerMarkup} 
+          <img class="chatbot-avatar" src="/static/${chatbot.avatarpath}" alt="${chatbot.name}" />
+          <div class="favorite-container">
+            <i class="fa fa-heart favorite-icon" onclick="favoriteChatbot(${chatbot.id})" style="color:${favoriteColorIndicator};"></i>
+          </div>
+        </div>
 
         <div class="chatbot-tags">${tags}</div>
-      </div>
-      <div class="chatbot-voting">
-        <button ${voteDisabled} class="vote-button thumbs-up ${voteClass}" onclick="vote(${chatbot.id}, 1)">
-          <i class="fas fa-thumbs-up"></i>
-        </button>
-        <button ${voteDisabled} class="vote-button thumbs-down ${voteClass}" onclick="vote(${chatbot.id}, -1)">
-          <i class="fas fa-thumbs-down"></i>
-        </button>
-        <div class="rating-container">
-        <span class="rating-value">Rating: ${rating}</span>
+        </div>
+        <div class="chatbot-voting">
+          <button ${voteDisabled} class="vote-button thumbs-up ${voteClass}" onclick="vote(${chatbot.id}, 1)">
+            <i class="fas fa-thumbs-up"></i>
+          </button>
+          <button ${voteDisabled} class="vote-button thumbs-down ${voteClass}" onclick="vote(${chatbot.id}, -1)">
+            <i class="fas fa-thumbs-down"></i>
+          </button>
+          <div class="rating-container">
+            <span class="rating-value">Rating: ${rating}</span>
+          </div>
+        </div>
+        <div class="chatbot-actions">
+          <button type="button" class="button-glass-chat" onclick="location.href='/chatroom/${chatbot.id}'">Chat</button>
+          <button type="button" class="button-glass-view" onclick="location.href='/chatbots/${chatbot.id}'">View</button>
+          <button type="button" class="button-glass-edit" onclick="location.href='/chatbots/edit/${chatbot.id}'">Edit</button>
+          <button type="button" class="button-glass-delete" onclick="deleteChatbot(${chatbot.id})">Delete</button>
+        </div>
       </div>
     </div>
-      <div class="chatbot-actions">
-        <button type="button" class="button-glass-chat" onclick="location.href='/chatroom/${chatbot.id}'">Chat</button>
-        <button type="button" class="button-glass-view" onclick="location.href='/chatbots/${chatbot.id}'">View</button>
-        <button type="button" class="button-glass-edit" onclick="location.href='/chatbots/edit/${chatbot.id}'">Edit</button>
-        <button type="button" class="button-glass-delete" onclick="deleteChatbot(${chatbot.id})">Delete</button>
-      </div>
-    
   `;
   
   chatbotGrid.innerHTML += chatbotCard;
@@ -261,7 +262,7 @@ function renderActiveTags() {
 
 
 function renderPagination() {
-  console.log('renderPagination function called');
+  // console.log('renderPagination function called');
 
   const paginationElement = document.getElementById('pagination');
   paginationElement.innerHTML = '';

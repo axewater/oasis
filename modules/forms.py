@@ -46,12 +46,20 @@ class UserPasswordForm(FlaskForm):
 class ChatbotForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     systemprompt = TextAreaField('System Prompt', validators=[DataRequired()])
-    avatarpath = FileField('Avatar Image', validators=[FileAllowed(['jpg', 'png'])])  # Removed 'DataRequired()'
+    avatarpath = FileField('Avatar Image', validators=[FileAllowed(['jpg', 'png'])]) 
     voicetype = SelectField('Voice Type', choices=[('male', 'Male'), ('female', 'Female')], validators=[DataRequired()])
-    llm_model = SelectField('LLM Model', choices=[('gpt-3.5-turbo', 'GPT-3.5 Turbo'), ('gpt-4', 'GPT-4')], validators=[DataRequired()])
+    llm_model = SelectField('LLM Model', choices=[
+        ('gpt-3.5-turbo', 'GPT-3.5 Turbo'), 
+        ('gpt-4', 'GPT-4'),
+        ('gpt-4-1106-preview', 'GPT-4 1106 Preview'),
+        ('gpt-4-vision-preview', 'GPT-4 Vision Preview')
+    ], validators=[DataRequired()])
     tags = StringField('Tags (comma separated)', validators=[Optional()])
     rating = IntegerField('Initial Rating', validators=[Optional(), NumberRange(min=0)])
+    premium = SelectField('Premium Status', choices=[('free', 'Free'), ('premium', 'Premium')])
+
     submit = SubmitField('Save')
+
 
 class NewsletterForm(FlaskForm):
     subject = StringField('Subject', validators=[DataRequired()])

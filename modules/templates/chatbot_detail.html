@@ -16,7 +16,9 @@
         </h1>
        <div class="profile_avatar">
             <img src="{{ url_for('static', filename=chatbot.avatarpath) }}" alt="{{ chatbot.name }}" class="img-fluid">
-            
+            {% if chatbot.premium == 'premium' %}
+            <p class="premium-tag">P</p>
+            {% endif %}
     </div>
         <button type="button" class="button-glass" onclick="location.href='/chatroom/{{ chatbot.id }}'">Chat</button>
         {% if current_user.role == 'admin' %}

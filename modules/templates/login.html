@@ -1,4 +1,4 @@
-{% extends 'homepage.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container-base">
@@ -36,6 +36,8 @@
                     <div class="container-base">
                         <input type="submit" value="LOGIN" class="button-glass">
                         <a href="/register" class="button-glass">REGISTER</a>
+                        <a href="{{ url_for('main.reset_password_request') }}" class="button-glass">Forgot Password?</a>
+
                     </div>
                 </form>
             </div>

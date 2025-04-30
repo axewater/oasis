@@ -36,6 +36,8 @@ class Chatbot(db.Model):
     llm_model = db.Column(db.String(255), default='gpt-3.5-turbo', nullable=False)
     rating = db.Column(db.Integer, default=0)
     tags = relationship('Tag', secondary=chatbot_tags, backref='chatbots')
+    premium = db.Column(db.Text, nullable=False, server_default='free')
+
 
     def delete(self):
         db.session.delete(self)
@@ -51,7 +53,8 @@ class Chatbot(db.Model):
             'voicetype': self.voicetype,
             'llm_model': self.llm_model,
             'tags': [tag.tag_name for tag in self.tags],
-            'rating': self.rating
+            'rating': self.rating,
+            'premium': self.premium
         }
 
 
@@ -79,6 +82,10 @@ class User(db.Model):
     avatarpath = db.Column(db.String(256), default='avatars_users/default.jpg')
     country = db.Column(db.String(64), nullable=True)
     about = db.Column(db.Text, nullable=True)
+    is_email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(256), nullable=True)
+    password_reset_token = db.Column(db.String(256), nullable=True)
+    token_creation_time = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

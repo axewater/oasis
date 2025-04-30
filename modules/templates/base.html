@@ -20,23 +20,24 @@
 <body>
     <nav class="menu">
         {% if current_user.is_authenticated %}
-            <button class="button-glass"><i class="fas fa-comments"></i> <a href="/chatbot_browser">Chat</a></button>
-            <button class="button-glass"><i class="fas fa-hammer"></i> <a href="/bot_generator">Build</a></button>
-            <button class="button-glass"><i class="fas fa-gamepad"></i> <a href="/games/game_selection">Games</a></button>
-            <button class="button-glass"><i class="fas fa-user-circle"></i> <a href="/settings_account">Account</a></button>
+            <a href="/chatbot_browser" class="button-glass"><i class="fas fa-comments"></i> Chat</a>
+            <a href="/bot_generator" class="button-glass"><i class="fas fa-hammer"></i> Build</a>
+            <a href="/games/game_selection" class="button-glass"><i class="fas fa-gamepad"></i> Games</a>
+            <a href="/settings_account" class="button-glass"><i class="fas fa-user-circle"></i> Account</a>
             
             {% if current_user.role == 'admin' %}
-                <button class="button-glass"><i class="fas fa-user-shield"></i> <a href="/admin_main">Admin</a></button>
+                <a href="/admin_main" class="button-glass"><i class="fas fa-user-shield"></i> Admin</a>
             {% endif %}
         {% else %}
-            <button class="button-glass"><i class="fas fa-sign-in-alt"></i> <a href="/login">Login</a></button>
-            <button class="button-glass"><i class="fas fa-user-plus"></i> <a href="/register">Register</a></button>
+            <a href="/login" class="button-glass"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="/register" class="button-glass"><i class="fas fa-user-plus"></i> Register</a>
         {% endif %}
-        <button class="button-glass"><i class="fas fa-question-circle"></i> <a href="/help">Help</a></button>
-        <button class="button-glass"><i class="fas fa-sign-out-alt"></i> <a href="/logout">Logout</a></button>
+        <a href="/help" class="button-glass"><i class="fas fa-question-circle"></i> Help</a>
+        <a href="/logout" class="button-glass"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
 
-        {% block content %}{% endblock %}
-    </div>
+    {% block content %}{% endblock %}
 </body>
+
+
 </html>

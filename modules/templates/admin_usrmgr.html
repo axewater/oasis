@@ -3,7 +3,7 @@
 {% block content %}
 
 {% include "admin_navbar.html" %}
-<div class="glass-panel-text">
+<div class="glass-panel-text-usrmgr">
     <div class="flashes">
         {% for message in messages %}
             <div class="flash">{{ message }}</div>
@@ -12,45 +12,46 @@
     <form method="POST" action="">
         {{ form.hidden_tag() }}
         <div>
-            {{ form.user_id.label }} {{ form.user_id(class="input-glass") }}
+            {{ form.user_id.label(class="formlabels") }} 
+            {{ form.user_id(class="input-class input-glass") }}
         </div>
         <div>
-            {{ form.state.label }} {{ form.state(class="input-checkbox") }}
+            {{ form.state.label(class="formlabels") }} {{ form.state(class="input-checkbox") }}
         </div>
         <div>
-            {{ form.speech_enabled.label }} {{ form.speech_enabled(class="input-glass-checkbox") }}
+            {{ form.speech_enabled.label(class="formlabels") }} {{ form.speech_enabled(class="input-glass-checkbox") }}
         </div>
         <div>
-            {{ form.name.label }} {{ form.name(class="input-glass") }}
+            {{ form.name.label(class="formlabels") }} {{ form.name(class="input-glass") }}
         </div>
         <div>
-            {{ form.email.label }} {{ form.email(class="input-glass") }}
+            {{ form.email.label(class="formlabels") }} {{ form.email(class="input-glass") }}
         </div>
         <div>
-            {{ form.role.label }} {{ form.role(class="input-glass") }}
-        </div>
-
-        <div>
-            {{ form.openai_api_key.label }} {{ form.openai_api_key(class="input-glass") }}
-        </div>
-        <div>
-            {{ form.gcloud_api_key.label }} {{ form.gcloud_api_key(class="input-glass") }}
-        </div>
-        <div>
-            {{ form.tts_engine.label }} {{ form.tts_engine(class="input-glass") }}
+            {{ form.role.label(class="formlabels") }} {{ form.role(class="input-glass") }}
         </div>
 
         <div>
-            {{ form.quota_messages.label }} {{ form.quota_messages(class="input-glass") }}
+            {{ form.openai_api_key.label(class="formlabels") }} {{ form.openai_api_key(class="input-glass") }}
         </div>
         <div>
-            {{ form.count_messages.label }} {{ form.count_messages(class="input-glass") }}
+            {{ form.gcloud_api_key.label(class="formlabels") }} {{ form.gcloud_api_key(class="input-glass") }}
         </div>
         <div>
-            {{ form.country.label }} {{ form.country(class="input-glass") }}
+            {{ form.tts_engine.label(class="formlabels") }} {{ form.tts_engine(class="input-glass") }}
+        </div>
+
+        <div>
+            {{ form.quota_messages.label(class="formlabels") }} {{ form.quota_messages(class="input-glass") }}
         </div>
         <div>
-            {{ form.about.label }} {{ form.about(class="button-glass") }}
+            {{ form.count_messages.label(class="formlabels") }} {{ form.count_messages(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.country.label(class="formlabels") }} {{ form.country(class="input-glass") }}
+        </div>
+        <div>
+            {{ form.about.label(class="formlabels") }} {{ form.about(class="button-glass") }}
         </div>
         <div>
             {{ form.submit(class="button-glass") }} {{ form.delete(class="button-glass") }}
@@ -64,6 +65,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Last seen</th>
                     <!-- Add other headers for user fields -->
                 </tr>
             </thead>
@@ -72,6 +74,7 @@
                 <tr>
                     <td>{{ user.name }}</td>
                     <td>{{ user.email }}</td>
+                    <td>{{ user.lastlogin }}</td>
                     <!-- Add other user details here -->
                 </tr>
                 {% endfor %}

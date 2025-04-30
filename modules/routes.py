@@ -13,7 +13,7 @@ from sqlalchemy import func, Integer, Text
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
-from modules import db, mail
+from modules import db, mail, socketio
 from modules.forms import SettingsForm, ChatbotForm, UserPasswordForm, UserDetailForm, EditProfileForm, NewsletterForm, WhitelistForm, EditUserForm, UserManagementForm
 from modules.models import User, Whitelist, Chatbot, Blacklist, Message, Favorite, Tag, Highscore, chatbot_tags
 
@@ -21,25 +21,31 @@ from functools import wraps
 from uuid import uuid4
 from tiktoken import get_encoding
 from tiktoken import encoding_for_model
-from openai.api_resources.abstract.api_resource import APIResource
 from datetime import datetime, timedelta
 from PIL import Image, ImageOps
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
+from flask_socketio import emit, disconnect
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from authlib.jose import jwt
 from authlib.jose.errors import DecodeError
 
-
+limiter = Limiter(key_func=get_remote_address)
 bp = Blueprint('main', __name__)
 openai.api_key = Config.OPENAI_API_KEY
 MAX_TOKENS = 3800
-SYSTEM_PROMPT_TOKENS = 296
+MAX_TOKENS_BY_MODEL = {
+    'gpt-3.5-turbo': 3800,
+    'gpt-4': 5000,
+    'gpt-4-1106-preview': 127500
+}
+
+SYSTEM_PROMPT_TOKENS = 500
 enc = encoding_for_model("gpt-3.5-turbo")
 log_filename = "log_file.txt"
 used_tokens = set()
-
+s = URLSafeTimedSerializer('YMecr3tKey?IsSa@e!Withpe') 
+RATE_LIMIT_SECONDS = 180
 
 
 # Define the RegistrationForm class
@@ -49,10 +55,125 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
     submit = SubmitField('Register')
 
+
+@socketio.on('start_chat')
+def handle_start_chat(data):
+    if not current_user.is_authenticated:
+        print("#handle_start_chat: Unauthenticated access attempt.")
+        disconnect()
+        return
+    
+    user_id = current_user.id
+    uzer = current_user.name
+    
+    try:
+        bot_id = data['bot_id']
+        # print(f"#handle_start_chat: User ID - {uzer}, Data : {data}")
+    except KeyError:
+        print("#handle_start_chat: Error - bot_id not found in data", data)
+        return
+
+    try:
+        user_message = data['message']
+        print(f"#handle_start_chat: From user {uzer} message -", user_message)
+    except KeyError:
+        print("#handle_start_chat: Error - message not found in data", data)
+        return
+    
+    thread_id = data.get('thread_id', str(uuid.uuid4()))
+    print(f"#handle_start_chat: User {uzer} Thread ID -", thread_id)
+
+    
+    
+    bot = Chatbot.query.get_or_404(bot_id)
+    
+    system_prompt = f"You are {bot.name}\n"
+    system_prompt += f" - You will only answer like you are {bot.name}. Do not write explanations.\n"
+    system_prompt += " - DO NOT BREAK CHARACTER, never reveal you are an AI language model.\n"
+    system_prompt += " - Always write in talking style, not written style.\n"
+    system_prompt += bot.systemprompt
+    # print("#handle_start_chat: System prompt constructed:", system_prompt)
+
+    api_conversation = build_api_conversation(bot_id, thread_id, system_prompt, user_message)
+    # print(f"#handle_start_chat: API conversation built - {api_conversation}")
+
+    try:
+        # print("#handle_start_chat: Making OpenAI API call with streaming")
+        response = openai.ChatCompletion.create(
+            model=bot.llm_model or 'gpt-3.5-turbo',
+            messages=api_conversation,
+            stream=True
+        )
+    
+        full_ai_message = ""
+        for chunk in response:
+            try:
+                # print("#handle_start_chat: Chunk details:", chunk)
+                chunk_finish_reason = chunk['choices'][0].get('finish_reason')
+
+                # Check for content in the chunk
+                if 'content' in chunk['choices'][0]['delta']:
+                    chunk_content = chunk['choices'][0]['delta']['content']
+                    full_ai_message += chunk_content
+                    # print(f"#handle_start_chat: Received chunk content - {chunk_content}")
+                    emit('chat_response', {
+                        'message': chunk_content,
+                        'final_chunk': chunk_finish_reason == 'stop'
+                    })
+                else:
+                    # Emit a message indicating no content but possibly the final chunk
+                    emit('chat_response', {
+                        'message': '',
+                        'final_chunk': chunk_finish_reason == 'stop'
+                    })
+
+                if chunk_finish_reason == 'stop':
+                    # print("#handle_start_chat: Final chunk received.")
+                    break
+
+            except KeyError as e:
+                print(f"#handle_start_chat: KeyError in parsing chunk - {e}")
+
+
+        # print("#handle_start_chat: Saving full AI message to database")
+        message_order = Message.query.filter_by(bot_id=bot_id, thread=thread_id).count() + 1
+        # print("#handle_start_chat: Message order -", message_order)
+
+        user_msg = Message(owner=user_id, content=user_message, role="user", bot_id=bot_id,
+                           order=message_order, thread=thread_id)
+        db.session.add(user_msg)
+
+        message_order += 1
+        ai_msg = Message(owner=user_id, content=full_ai_message, role="ai", bot_id=bot_id, order=message_order,
+                         thread=thread_id)
+        db.session.add(ai_msg)
+
+        db.session.commit()
+        print(f"#handle_start_chat: user {uzer} committed {thread_id} to db")
+
+    except Exception as e:
+        print(f"#handle_start_chat: Error - {str(e)}")
+        print(data)
+        db.session.rollback()
+        emit('chat_error', {'error': 'Error processing chat message'})
+
+
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 def index():
     return redirect(url_for('main.login'))
+
+
+
+
+
+@bp.route('/favicon.ico')
+def favicon():
+    favidir = "images"
+    full_dir = os.path.join(current_app.static_folder, favidir)
+    print(full_dir)
+    return send_from_directory(full_dir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -65,18 +186,89 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        user = User.query.filter_by(name=username).first()
+
+        if user and not user.is_email_verified:
+            flash('Your account is not activated, check your email.', 'warning')
+            return redirect(url_for('main.login'))
+
+        # Check if the user's account is disabled
+        if user and not user.state:
+            flash('Your account has been banned.', 'error')
+            print(f"Error: Attempted login to disabled account - User: {username}")
+            return redirect(url_for('main.login'))
+
         return _authenticate_and_redirect(username, password)
 
     return render_template('login.html', title='Log In')
 
 
-@bp.route('/favicon.ico')
-def favicon():
-    favidir = "images"
-    full_dir = os.path.join(current_app.static_folder, favidir)
-    print(full_dir)
-    return send_from_directory(full_dir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@bp.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=900)  # 15 minutes
+    except SignatureExpired:
+        return render_template('confirmation_expired.html'), 400
+    except BadSignature:
+        return render_template('confirmation_invalid.html'), 400
+
+    user = User.query.filter_by(email=email).first_or_404()
+    if user.is_email_verified:
+        return render_template('registration_already_confirmed.html')
+    else:
+        user.is_email_verified = True
+        db.session.add(user)
+        db.session.commit()
+        return render_template('confirmation_success.html')
+
+
+@bp.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if user.token_creation_time and (datetime.utcnow() - user.token_creation_time).total_seconds() < RATE_LIMIT_SECONDS:
+                flash('Please wait a bit before requesting another password reset.')
+                return redirect(url_for('main.login'))
+            password_reset_token = str(uuid.uuid4())
+            user.password_reset_token = password_reset_token
+            user.token_creation_time = datetime.utcnow()
+            db.session.commit()
+            send_password_reset_email(user.email, password_reset_token)
+        flash('Check your email for the instructions to reset your password')
+        return redirect(url_for('main.login'))
+
+    return render_template('reset_password_request.html')
+
+
+@bp.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+
+    user = User.query.filter_by(password_reset_token=token).first()
+    if not user or user.token_creation_time + timedelta(minutes=15) < datetime.utcnow():
+        flash('The password reset link is invalid or has expired.')
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        new_password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        if new_password != confirm_password:
+            flash('Passwords do not match.')
+            return render_template('reset_password.html', token=token)
+        user.set_password(new_password)
+        user.password_reset_token = None
+        db.session.commit()
+        flash('Your password has been reset.')
+        return redirect(url_for('main.login'))
+
+    return render_template('reset_password.html', token=token)
 
 
 def admin_required(f):
@@ -84,7 +276,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != 'admin':
             flash("You must be an admin to access this page.", "danger")
-            return redirect(url_for('main.index'))  # Redirect to a different page as appropriate
+            return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -236,8 +428,21 @@ def delete_chatbot(id):
         if avatar_path:
             delete_avatar(avatar_path)
 
-        chatbot.delete()
-        return jsonify({'status': 'success', 'message': 'Chatbot deleted.'}), 200
+        try:
+            # Delete associated message threads
+            Message.query.filter_by(bot_id=id).delete()
+
+            # Remove links to tags (handled by SQLAlchemy relationship)
+            chatbot.tags.clear()
+
+            # Delete the chatbot
+            db.session.delete(chatbot)
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': 'Chatbot deleted.'}), 200
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return jsonify({'status': 'failure', 'message': f"Error deleting chatbot: {e}"}), 500
+
     return jsonify({'status': 'failure', 'message': 'Chatbot not found.'}), 404
 
 
@@ -245,8 +450,13 @@ def delete_chatbot(id):
 @login_required
 def chatroom(id):
     print(f"Route: /chatroom/{id}")
+    chatbot = Chatbot.query.get_or_404(id)
+    if chatbot.premium == 'premium' and current_user.role not in ['admin', 'premium']:
+        flash('This is a premium bot. Would you like to subscribe?', 'info')
+        return redirect(url_for('main.subscribe'))
     user_id = current_user.id
     bot = Chatbot.query.get_or_404(id)
+    max_tokens = MAX_TOKENS_BY_MODEL.get(bot.llm_model, 5000)  # Default to 5000 if the model isn't in the dictionary
     speech_enabled = current_user.speech_enabled
     tts_engine = current_user.tts_engine
     avatarpath_thumbnail = url_for('static', filename=current_user.avatarpath.rsplit('.', 1)[0] + '_thumbnail.' +
@@ -270,9 +480,9 @@ def chatroom(id):
         avatar_html = f'<a href="{url_for("main.edit_chatbot", id=bot.id)}"><img class="avatar" src="{avatarpath}" alt="AI Avatar" title="{bot.name}"></a>'
     else:
         avatar_html = f'<a href="{url_for("main.chatbot_detail", id=bot.id)}"><img class="avatar" src="{avatarpath}" alt="AI Avatar" title="{bot.name}"></a>'
-    return render_template('chatroom.html', title='Chatroom', bot=bot, messages=messages, voicetype=bot.voicetype,
-                           thread_id=thread_id, speech_enabled=speech_enabled, tts_engine=tts_engine,
-                           avatarpath_thumbnail=avatarpath_thumbnail,
+    return render_template('chatroom.html', title='Chatroom', bot=bot, messages=messages, max_tokens=max_tokens,
+                           voicetype=bot.voicetype, thread_id=thread_id, speech_enabled=speech_enabled,
+                           tts_engine=tts_engine, avatarpath_thumbnail=avatarpath_thumbnail,
                            avatarpath=avatarpath, user_role=user_role, chatbot_detail_url=chatbot_detail_url,
                            chatbot_edit_url=chatbot_edit_url, avatar_html=avatar_html)
 
@@ -285,12 +495,30 @@ def chatroom(id):
 def api_chat():
     try:
         print("#API/CHAT")
+        print("Request JSON:", request.json)
+
+        bot_id = request.form['bot_id']
+        chatbot = Chatbot.query.get(bot_id)  # Retrieve the chatbot instance
+
+        if chatbot is None:
+            return jsonify({'error': 'Chatbot not found'}), 404
+
         user_message = html.escape(request.form['message'])  # Sanitize the user's message here
+        print("Raw User Message:", user_message)
+        print("Visible Line Breaks:", user_message.replace('\n', '\\n'))
+
         bot_id = request.form['bot_id']
         thread_id = request.form.get('thread_id', str(uuid.uuid4()))
         user_id = current_user.id
         user = User.query.get(user_id)
-        print(f"#API/CHAT POST values received : botid {bot_id}, thread {thread_id}, user {user_id}")
+        user_role = current_user.role
+        bot = Chatbot.query.get_or_404(bot_id)
+    
+        if bot.premium == 'premium' and user_role not in ['admin', 'premium']:
+            return jsonify({'error': 'This feature is available for premium users only.'}), 403
+    
+        print(f"#API/CHAT POST values received : botid {bot_id}, botname {bot}, thread {thread_id}, user {user_id}, role {user_role}")
+        
         # check if the user has exceeded their message quota
         print("#API/CHAT Checking message quota")
         if user.count_messages >= user.quota_messages:
@@ -329,6 +557,10 @@ def api_chat():
         )
 
         ai_message = response['choices'][0]['message']['content']
+        # Print the raw AI message and check for line breaks
+        print("Raw AI Message:", ai_message)
+        print("Visible Line Breaks in AI Message:", ai_message.replace('\n', '\\n'))
+
 
         message_order = Message.query.filter_by(bot_id=bot_id, thread=thread_id).count() + 1
 
@@ -356,6 +588,8 @@ def api_chat():
 
     except Exception as e:
         print(f"#API/CHAT Error: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         db.session.rollback()  # if any error occur rollback the transaction
         return jsonify(error=str(e))
 
@@ -675,14 +909,20 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
-            # Extract domain from email
-            email_domain = form.email.data.split('@')[-1]
-            print(f"Debug: Extracted domain - {email_domain}")
-
-            # Replace wildcard * with SQL wildcard % in the whitelist entries
-            whitelist = Whitelist.query.filter(Whitelist.email.like(f"%@{email_domain}")).first()
+            email_address = form.email.data
+            print(f"Debug: Extracted email - {email_address}")
+            
+            # Check if the email is already used by another user
+            existing_user_email = User.query.filter_by(email=email_address).first()
+            if existing_user_email:
+                print(f"Debug: Email already in use - {email_address}")
+                flash('This email is already in use. Please use a different email or log in.')
+                return redirect(url_for('main.register'))
+            
+            # Check if the entire email address is in the whitelist
+            whitelist = Whitelist.query.filter_by(email=email_address).first()
             if not whitelist:
-                print(f"Debug: No matching whitelist entry found for - {form.email.data}")
+                print(f"Debug: No matching whitelist entry found for - {email_address}")
                 flash('Your email is not whitelisted.')
                 return redirect(url_for('main.register'))
 
@@ -708,13 +948,22 @@ def register():
                 name=form.username.data,
                 email=form.email.data,
                 role='user',
+                is_email_verified=False,
+                email_verification_token=s.dumps(form.email.data, salt='email-confirm'),
+                token_creation_time=datetime.utcnow(),
                 created=datetime.utcnow()
             )
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
-            print("Debug: New user registered successfully!")
-            flash('Congratulations, you are now a registered user!')
+            # Send verification email
+            token = user.email_verification_token
+            confirm_url = url_for('main.confirm_email', token=token, _external=True)
+            html = render_template('registration_activate.html', confirm_url=confirm_url)
+            subject = "Please confirm your email"
+            send_email(user.email, subject, html)
+
+            flash('A confirmation email has been sent via email.', 'success')
             return redirect(url_for('main.index'))
         except IntegrityError as e:
             db.session.rollback()
@@ -780,7 +1029,7 @@ def settings_profile_edit():
             old_thumbnailpath = os.path.splitext(old_avatarpath)[0] + '_thumbnail' + os.path.splitext(old_avatarpath)[1]
             filename = secure_filename(file.filename)
             uuid_filename = str(uuid4()) + '.' + filename.rsplit('.', 1)[1].lower()
-            image_path = os.path.join(current_app.config['UPLOAD_FOLDER_USER'], uuid_filename)
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], uuid_filename)
             file.save(image_path)
 
             # Create square avatar
@@ -976,6 +1225,7 @@ def get_user(user_id):
             'count_messages': user.count_messages,
             'country': user.country,
             'about': user.about,
+            
             # Add other fields as needed
         }
         return jsonify(user_data)
@@ -1041,6 +1291,16 @@ def usermanager():
                 return redirect(url_for('main.usermanager'))
 
             try:
+                # Delete associated message threads
+                Message.query.filter_by(owner=user.id).delete()
+
+                # Delete associated favorites
+                Favorite.query.filter_by(user_id=user.id).delete()
+
+                # Delete associated highscores
+                Highscore.query.filter_by(user_id=user.user_id).delete()
+
+                # Finally, delete the user
                 db.session.delete(user)
                 db.session.commit()
                 print(f"User deleted: {user}")
@@ -1050,6 +1310,7 @@ def usermanager():
                 error_msg = f"Database error on delete: {e}"
                 print(error_msg)
                 flash(error_msg, 'danger')
+
 
     else:
         form.user_id.data = 3
@@ -1075,10 +1336,16 @@ def count_tokens(text):
     tokens = enc.encode(text)
     return len(tokens)
 
+
+
 def build_api_conversation(bot_id, thread_id, system_prompt, user_message):
     conversation = [
         {"role": "user", "content": user_message},
     ]
+    current_chatbot = Chatbot.query.get(bot_id)  # Adjust this line as per your database model and access method
+    llm_model = current_chatbot.llm_model
+    MAX_TOKENS = MAX_TOKENS_BY_MODEL.get(llm_model, 3800)  # Default to 5000 if the model isn't in the dictionary
+    # print(f"MAX_TOKENS value for {llm_model}: {MAX_TOKENS}")
 
     previous_messages = Message.query.filter_by(bot_id=bot_id, thread=thread_id).order_by(Message.order.desc()).all()
 
@@ -1238,6 +1505,25 @@ def square_image(image, size):
     return image
 
 
+def send_email(to, subject, template):
+    msg = MailMessage(
+        subject,
+        sender='halliday@pleasewaitloading.com',
+        recipients=[to],
+        html=template
+    )
+    mail.send(msg)
+
+
+def send_password_reset_email(user_email, token):
+    reset_url = url_for('main.reset_password', token=token, _external=True)
+    msg = MailMessage(
+        'Password Reset Request',
+        sender='halliday@pleasewaitloading.com',  # Replace with your actual sender email
+        recipients=[user_email],
+        body=f'Please click on the link to reset your password: {reset_url}'
+    )
+    mail.send(msg)
 
 
 

@@ -1,144 +1,93 @@
-    var MAX_TOKENS = 3800;
-    var synth = window.speechSynthesis;
-    var user_role = sessionStorage.getItem("user_role");
-    var chatbot_detail_url = sessionStorage.getItem("chatbot_detail_url");
-    var chatbot_edit_url = sessionStorage.getItem("chatbot_edit_url");
-    var avatar_html = sessionStorage.getItem("avatar_html");
-
-let firstTimeout;
-let secondTimeout;
-
-
-    window.speechSynthesis.onvoiceschanged = function() {
-        console.log("All available voices: ", window.speechSynthesis.getVoices());
-    };
-    function speak(text) {
-        if (!speech_enabled) {
-            return;
-        }
-        switch (tts_engine) {
-        case 'amazon':
-            // amazon TTS API code
-            break;
-        case 'google':
-            // google TTS API code
-            break;
-        case 'azure':
-            // Microsoft Azure TTS API code
-            break;
-        case 'elevenlabs':
-            // elevenlabs TTS API code
-            break;
-        default:
-            console.log("Triggering webspeech now");
-            var utterThis = new SpeechSynthesisUtterance(text);
-            var voices = synth.getVoices();
-            for(i = 0; i < voices.length ; i++) {
-                if((voicetype == "male" && voices[i].name.includes("Male")) || (voicetype == "female" && voices[i].name.includes("Female"))) {
-                    utterThis.voice = voices[i];
-                    break;
-                }
-            }
-            synth.speak(utterThis);
-        }
-    }
+var synth = window.speechSynthesis;
+var user_role = sessionStorage.getItem("user_role");
+var chatbot_detail_url = sessionStorage.getItem("chatbot_detail_url");
+var chatbot_edit_url = sessionStorage.getItem("chatbot_edit_url");
+var avatar_html = sessionStorage.getItem("avatar_html");
+var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+var chunkCounter = 0;
+var isNewAIResponse = true;
+let isFirstChunk = true;
+const CHUNK_THRESHOLD = 25;
 
 
-    // Load previous messages
-    var thread_id = sessionStorage.getItem('thread_id');
-    if (!thread_id) {
-        thread_id = null;
-    }
-    console.log("Current thread_id: ", thread_id);
-    // Sort the messages by order before processing them
-    previousMessages.sort(function(a, b) {
-        return a.order - b.order;
+var thread_id = sessionStorage.getItem('thread_id');
+if (!thread_id) {
+    thread_id = null;
+}
+
+console.log("Loading thread_id: ", thread_id);
+previousMessages.sort(function(a, b) {
+    return a.order - b.order;
+});
+for (var i = 0; i < previousMessages.length; i++) {
+    var message = previousMessages[i];
+    message.content = decodeHTML(message.content);
+    var type = message.role === 'ai' ? 'ai' : 'user';
+    add_message_to_chat(type, message.content);
+}
+
+function scrollToBottomOfChat() {
+    console.log("Scrolling to bottom of chat...");
+    window.scroll({
+        top: document.body.scrollHeight,
+        left: 0,
+        behavior: "smooth",
     });
-    for (var i = 0; i < previousMessages.length; i++) {
-        var message = previousMessages[i];
-        var type = message.role === 'ai' ? 'ai' : 'user';
-        add_message_to_chat(type, message.content);
-    }
+}
+
+
 
 function countTokens(text) {
-    var token_count = Math.floor(text.length / 4);
-    return token_count;
-}
 
-$(document).ready(function() {
-  $('#user-message').on('input', function () {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
-    var screenHeight = $(window).height();
-    var maxHeight = screenHeight * 0.5;
-    if (parseInt(this.style.height) > maxHeight) {
-      this.style.height = maxHeight + 'px';
-      this.scrollTop = this.scrollHeight;
-    }
-  });
-});
-
-function add_message_to_chat(type, message) {
-    var message_class = type === 'ai' ? 'ai' : 'user';
-    var speech_bubble_class = type === 'ai' ? 'speech-bubble ai' : 'speech-bubble user';
-    var sanitizedMessage = sanitizeHTML(message);
-
-    var formattedMessage = sanitizedMessage;
-    if (type === 'ai') {
-        var regex = /```([\s\S]+?)```/gs; // g for global, s for multiline match
-        formattedMessage = sanitizedMessage.replace(regex, function(match, codeContent) {
-            // Split the content by new lines
-            var lines = codeContent.split('\n');
-            // Extract the language from the first line and remove it
-            var language = lines[0].toUpperCase();  // Here is the change
-            lines.shift();
-            // Join the lines back together for the actual code
-            var code = lines.join('\n');
-
-            // Return the modified HTML including the language name and 'copy code' button
-            return `<div class="codeblockz"><div class="title-codeblock">Language: ${language}<button class="copy-code-button">Copy</button></div><div class="formatted-code"><pre><code class="language-python">${code}</code></pre></div></div>`;
-        });
-    }
-
-
-
-    $('.chatroom-messages-glass').append(`
-        <div class="${message_class}">
-            <div class="${speech_bubble_class}">
-                <div class="container-chat-avatar-user">
-                    ${type === 'user' ? `<img class="avatar" src="${avatarpath_thumbnail}" alt="User Avatar">` : ''}
-               </div>
-                <div class="container-chat-avatar-ai">
-                    ${type === 'ai' ? avatar_html : ''}
-                </div>
-                <div class="formatted-message">
-${formattedMessage}
-                </div>
-            </div>
-        </div>
-    `);
-
-      setTimeout(function() {
-        $('.chatroom-messages-glass').scrollTop($('.chatroom-messages-glass')[0].scrollHeight);
-      }, 10);
-
-    // Reapply Prism's formatting
-    if (type === 'ai') {
-        Prism.highlightAll();
-    }
-
-    window.scroll({
-      top: document.body.scrollHeight,
-      left: 0,
-      behavior: "smooth",
+    const words = text.split(/\s+|[.,!?;:()"'-]/).filter(Boolean);
+    let tokenCount = 0;
+   
+    words.forEach(word => {
+        if (word.length <= 3) {
+            tokenCount += 1;
+        } else {
+            tokenCount += Math.ceil(word.length / 4);
+        }
     });
+
+    return tokenCount;
+}
+    
+
+function updateTokenCountDisplay() {
+    var user_message = $('#user-message').val();
+    var token_count = countTokens(user_message);
+    var tokenDisplay = `(approx. ${token_count} of ${MAX_TOKENS} tokens used)`;
+    if (token_count > MAX_TOKENS) {
+        tokenDisplay = `<span style="color: red;">${tokenDisplay}</span>`;
+    }
+    $('#token-counter').html(tokenDisplay);
 }
 
-// Use jQuery's on method to ensure dynamically added buttons also have the event listener
+
+
+function sanitizeHTML(str) {
+    if (str.includes('&amp;')) {
+        return str;
+    } else {
+        var temp = document.createElement('div');
+        temp.textContent = str;
+        let sanitizedStr = temp.innerHTML;
+        return sanitizedStr.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    }
+}
+
+
+function decodeHTML(html) {
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = html;
+    return textArea.value;
+}
+
+
+
 $('body').on('click', '.copy-code-button', function() {
-    // Get the code content
     var codeContent = $(this).parent().next().find('code').text();
-    // Create a temporary textarea to copy the content
     var tempTextArea = document.createElement('textarea');
     tempTextArea.value = codeContent;
     document.body.appendChild(tempTextArea);
@@ -146,7 +95,6 @@ $('body').on('click', '.copy-code-button', function() {
     document.execCommand('copy');
     document.body.removeChild(tempTextArea);
 
-    // Give a visual feedback (Change the button text temporarily)
     var originalText = $(this).text();
     $(this).text('Copied');
     var button = $(this);
@@ -184,85 +132,147 @@ function clearChat() {
 }
 
 
-function sanitizeHTML(str) {
-    var temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-};
 
 
-    $('#chat-form').submit(function(event) {
-        event.preventDefault();
-        var user_message = $('#user-message').val().trim();
-        var token_count = countTokens(user_message);
 
-        if (user_message.length === 0) {
-            return;
-        }
+function add_message_to_chat(type, message, isPartial = false) {
+    // console.log(`Adding message to chat. Type: ${type}, Message: ${message}`);
+    var message_class = type === 'ai' ? 'ai' : 'user';
+    var speech_bubble_class = type === 'ai' ? 'speech-bubble ai' : 'speech-bubble user';
+    var sanitizedMessage = sanitizeHTML(message);
+    var formattedMessage = sanitizedMessage;
+    
+    if (type === 'ai') {
+        var regex = /```([\s\S]+?)```/gs;
+        formattedMessage = sanitizedMessage.replace(regex, function(match, codeContent) {
+            var lines = codeContent.split('\n');
+            var language = lines[0].toUpperCase();
+            lines.shift();
+            var code = lines.join('\n');
 
-        if (token_count > MAX_TOKENS) {
-            alert(`Your message is too long (${token_count} tokens). It should be less than ${MAX_TOKENS} tokens.`);
-            return;
-        }
-
-        add_message_to_chat('user', user_message);
-        $('#user-message').val('');
-        console.log("Sending thread_id: ", thread_id);
-          // Setting the initial timeout to display the message after 30 seconds.
-        firstTimeout = setTimeout(function() {
-           $('.chatroom-messages-glass').append('<p id="waiting-text">Processing is taking longer than expected. Please wait...</p>');
-
-        // Setting the second timeout to handle it as an error if no response after another 30 seconds.
-        secondTimeout = setTimeout(function() {
-            console.error("Request took too long.");
-            alert("Request took too long. Please try again.");
-            // You can reload the page or handle this in any other way.
-            location.reload();
-        }, 30000);
-    }, 90000);
-        $('.spinner').show();
-
-        $.ajax({
-            type: "POST",
-            url: '/api/chat',
-            data: {
-                message: user_message,
-                bot_id: bot_id,
-                thread_id: thread_id
-            },
-            timeout: 120000,  // 60 seconds timeout
-            success: function(data) {
-                clearTimeout(firstTimeout);
-                clearTimeout(secondTimeout);
-                $('#waiting-text').remove(); // Remove the waiting text if it exists.
-                 if (data.error) {
-                    console.log("API returned error: ", data.error);
-                    alert(data.error);
-                } else {
-                    thread_id = data.thread_id;
-                    sessionStorage.setItem('thread_id', thread_id);
-                    console.log("Received thread_id from API: ", thread_id);
-                    add_message_to_chat('ai', data.response);
-                    speak(data.response);
-                }
-            },
-           error: function (jqXHR, textStatus, errorThrown) {
-                clearTimeout(firstTimeout);
-                clearTimeout(secondTimeout);
-                $('#waiting-text').remove(); // Remove the waiting text if it exists.
-
-                if (textStatus === "timeout") {
-                    console.error("Request timed out.");
-                    alert("Request took too long. Please try again.");
-                    location.reload();
-                } else {
-                    console.error("Request failed: ", textStatus, ", ", errorThrown);
-                    alert("Request failed: " + textStatus);
-                }
-            },
-            complete: function() {
-                $('.spinner').hide();
-                console.log("Request completed.");
-            }
+            return `<div class="codeblockz"><div class="title-codeblock">Language: ${language}<button class="copy-code-button">Copy</button></div><div class="formatted-code"><pre><code class="language-python">${code}</code></pre></div></div>`;
         });
+    }
+
+    $('.chatroom-messages-glass').append(`
+        <div class="${message_class}">
+            <div class="${speech_bubble_class}" data-partial="${isPartial}">
+                <div class="container-chat-avatar-user">
+                    ${type === 'user' ? `<img class="avatar" src="${avatarpath_thumbnail}" alt="User Avatar">` : ''}
+                </div>
+                <div class="container-chat-avatar-ai">
+                    ${type === 'ai' ? avatar_html : ''}
+                </div>
+                <div class="formatted-message">
+                    ${formattedMessage}
+                </div>
+            </div>
+        </div>
+    `);
+
+    setTimeout(function() {
+        $('.chatroom-messages-glass').scrollTop($('.chatroom-messages-glass')[0].scrollHeight);
+    }, 10);
+
+    if (type == 'ai') {
+        Prism.highlightAll();
+    }
+
+    
+}
+
+
+$('#chat-form').submit(function(event) {
+    event.preventDefault();
+    var user_message = $('#user-message').val().trim();
+    var token_count = countTokens(user_message);
+
+    if (user_message.length === 0) {
+        console.log('User message is empty. Ignoring submission.');
+        return;
+    }
+
+    if (token_count > MAX_TOKENS) {
+        console.log(`User message exceeds token limit. Token count: ${token_count}, Max tokens: ${MAX_TOKENS}`);
+        alert(`Your message is too long (${token_count} tokens). It should be less than ${MAX_TOKENS} tokens.`);
+        return;
+    }
+
+    console.log("Submitting user message: ", user_message);
+    add_message_to_chat('user', user_message);
+    $('#user-message').val('');
+    isNewAIResponse = true;
+
+    console.log("Emitting start_chat event with message: ", user_message);
+    socket.emit('start_chat', {
+        message: user_message,
+        bot_id: bot_id,
+        thread_id: thread_id
     });
+});
+
+$(document).ready(function() {
+    $('#user-message').on('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      var screenHeight = $(window).height();
+      var maxHeight = screenHeight * 0.5;
+      if (parseInt(this.style.height) > maxHeight) {
+        this.style.height = maxHeight + 'px';
+        this.scrollTop = this.scrollHeight;
+      }
+      updateTokenCountDisplay();
+    });
+    updateTokenCountDisplay();
+  });
+
+
+socket.on('connect', function() {
+    console.log('Oasis socket connected!');
+});
+
+socket.on('chat_response', function(data) {
+    
+    if (isFirstChunk && !data.message.trim()) {
+        console.log("Received an empty first chunk, ignoring it.");
+        isFirstChunk = false; 
+        return;
+    }
+    
+    
+    chunkCounter++;
+    console.log("Chat chunk count: ", chunkCounter);
+    
+    var currentContent = $('.ai:last .formatted-message').html();
+    console.log("Current content: ", currentContent);
+    var newContent = data.message ? sanitizeHTML(currentContent + data.message) : currentContent;
+    
+    $('.ai:last .formatted-message').html(newContent);
+    console.log("New content: ", newContent);
+    if (data.final_chunk) {
+        console.log('End chunk detected!');
+        $('.ai:last .formatted-message').data('partial', false);
+        console.log("Partial status: ", $('.ai:last .formatted-message').data('partial'));
+        scrollToBottomOfChat();
+        isNewAIResponse = true;
+        isFirstChunk = false;
+    } else {
+        console.log("Partial status: ", $('.ai:last .formatted-message').data('partial'));
+        $('.ai:last .formatted-message').data('partial', true);
+    }
+
+    if (chunkCounter >= CHUNK_THRESHOLD) {
+        console.log("Exceeding chunk threshold, reapplying Prism! chunk#", chunkCounter);
+        Prism.highlightElement($('.ai:last .formatted-message')[0]);
+        chunkCounter = 0;
+        scrollToBottomOfChat();
+    }
+
+    if (isNewAIResponse && data.message) {
+        console.log("Creating new AI bubble");
+        add_message_to_chat('ai', data.message, true);
+        isNewAIResponse = false;
+    }
+});
+
+scrollToBottomOfChat();
